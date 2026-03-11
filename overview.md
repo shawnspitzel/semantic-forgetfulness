@@ -85,35 +85,13 @@ The hippocampus holds fast, lossy episodic traces. Important memories are later 
 Synapses active during salient events get "tagged" and preferentially capture plasticity resources. This is the biological analog of L1 priority. What makes something tag-worthy: **novelty, reward signal, prediction error, emotional valence.** These map directly to computable importance signals (surprisal, gradient saliency, etc.).
 
 ### Active Forgetting / Retrieval Inhibition → Suppression Mechanism
-The brain doesn't just passively forget — it *actively suppresses* memories that interfere with current goals. This is mediated by inhibitory interneurons. The architectural analog is a suppression mechanism that demotes content not just because it's old, but because it's *counterproductive to the current task*. No current LLM memory system does this.
+The brain doesn't just passively forget — it *actively suppresses* memories that interfere with current goals. This is mediated by inhibitory interneurons. The architectural analog is a suppression mechanism that demotes content not just because it's old, but because it's *counterproductive to the current task*. No current LLM memory system does this, food for thought.
 
-### Key Framing
-> Compression handles **passive forgetting**. Suppression handles **active forgetting**. Both are necessary for a complete system.
-
----
-
-## 7. What We Currently Know / Can Be Confident About
-
-| Claim | Confidence | Notes |
-|---|---|---|
-| Context rot is real and attention-dilution driven | High | Well documented empirically |
-| Hierarchical cache architecture is feasible | Medium-High | CompLLM shows compression can preserve QA performance |
-| L1 hit rate is a valid training objective | High | Clean, interpretable, maps well to OS cache theory |
-| Reconstruction is the highest-risk component | High | Hallucination propagation is a genuine threat |
-| Active suppression is novel | High | Not present in any known prior work |
-| Continuous deployment learning is feasible | Low-Medium | Weight vs. state update question unresolved |
+Perhaps the ideal set-up is a Compression component coupled with a Supression component. Compression handles **passive forgetting**. Suppression handles **active forgetting**. 
 
 ---
 
-## 8. What This Does and Doesn't Fix
-
-- **Does:** Sidesteps context rot by curating what enters the active window in the first place.
-- **Doesn't:** Fix attention dilution within a flat context window — that's a different problem.
-- **Risk:** *Silent context exclusion* — if the importance model is wrong early, critical content never reaches L1. Potentially worse than context rot. Needs a safeguard.
-
----
-
-## 9. Potential Benchmarks / Experiments
+## 7. Potential Benchmarks / Experiments
 
 - **Needle-in-a-Haystack:** Tests whether critical early information survives into L1. Direct test of the core claim.
 - **Long-Document QA (e.g., QuALITY, NarrativeQA):** Measures task performance degradation vs. compression ratio.
@@ -124,7 +102,7 @@ The brain doesn't just passively forget — it *actively suppresses* memories th
 
 ---
 
-## 10. Immediate Next Steps / Priorities
+## 8. Immediate Next Steps / Priorities
 
 1. **Resolve the learning locus question** — weight updates vs. cache state updates at inference. This is a foundational design decision.
 2. **Design the reconstructor** with uncertainty flagging as a first-class output, not an afterthought.
@@ -135,7 +113,7 @@ The brain doesn't just passively forget — it *actively suppresses* memories th
 
 ---
 
-## 11. Open Questions (Parking Lot)
+## 9. Open Questions
 
 - What is the right compression ratio at each level? (L1→L2, L2→L3)
 - At what context length does context rot become severe enough to justify this overhead? (Empirical threshold needed)
@@ -144,6 +122,9 @@ The brain doesn't just passively forget — it *actively suppresses* memories th
 - How do we handle cross-session memory? L3 persistence across conversations is a different engineering problem.
 - How does this interact with RAG (Retrieval-Augmented Generation)? Potential overlap or synergy.
 
+## 10. Potential Hyperparameters
+- Promotion / Eviction Leniance (promote after 1 cache miss? after 2? 10? Can tweak to find the optimal value).
+- Cache Size
+
 ---
 
-*End of brain doc. This is a living document — update as design decisions are made.*
