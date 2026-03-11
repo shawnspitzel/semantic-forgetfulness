@@ -1,5 +1,4 @@
-# Semantic Forgetfulness — Project Brain Doc
-*Working research notes. Last updated: March 2026.*
+# Semantic Forgetfulness
 
 ---
 
