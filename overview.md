@@ -1,12 +1,12 @@
 # Semantic Forgetfulness
 
-## 1. The Core Idea (One Paragraph)
+## 1. The Core Idea
 
 Current LLMs treat their context window as a flat, uniform resource. As context grows long, attention dilutes and early-but-important information gets drowned out — this is **context rot**. Semantic Forgetfulness proposes treating LLM memory as a **hierarchical cache (L1/L2/L3)**, where content is allocated by *semantic importance* rather than recency. The model learns to actively compress low-priority content into lossy "gists" (forgetting), while keeping high-priority content in fast, accessible storage. Critically, **forgetting is a first-class, trainable, goal-directed operation** — not a side effect of limited memory.
 
 ---
 
-## 2. What We're Claiming (The Novel Contribution)
+## 2. Novelty
 
 > *"This is the first architecture that treats forgetting as a trainable, goal-directed operation rather than a passive consequence of context limits."*
 
