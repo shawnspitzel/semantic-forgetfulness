@@ -1,209 +1,149 @@
-# Semantic Forgetfulness: A Hierarchical Memory Architecture for LLMs
-
-## 1. Problem and Intuition
-
-Modern large language models (LLMs) treat the context window as a flat, uniform resource. As sequences grow long, models often exhibit **context rot**: performance degrades, earlier but semantically crucial information is under‑used, and recent or superficial details dominate. This effect has been observed in practical evaluations of long‑context behavior and user reports of models “losing the thread” over time. [web:19]
-
-Recent work reframes the context window as an **L1 cache** and builds additional memory levels around it. For example, Pichay et al. (2026) propose a four‑level memory hierarchy for LLM workloads, with an L1 generation window, L2 working set, L3 compressed history, and L4 persistent storage, managed via demand paging and pinning strategies. [web:11][web:23] While this greatly improves throughput and cost, the compression and eviction policies remain largely heuristic (e.g., recency, frequency), not deeply **semantic**.
-
-This note proposes **semantic forgetfulness**: an explicit, learnable mechanism that (a) compresses low‑priority context segments into compact, lossy representations and (b) promotes high‑priority content into small, fast caches. The goal is to organize the effective context by **importance**, not just by recency or raw length, thereby mitigating context rot.
+# Semantic Forgetfulness — Project Brain Doc
+*Working research notes. Last updated: March 2026.*
 
 ---
 
-## 2. High‑Level Idea
+## 1. The Core Idea (One Paragraph)
 
-**Goal:** Given a long context, maintain an L1 “semantic working set” that always contains the most task‑relevant information, while demoting less relevant content into lossy compressed forms at lower memory levels (L2/L3).
-
-Core behaviors:
-
-- **Segment long context.** Split a long input (e.g., 10k tokens) into fixed‑length segments.
-- **Lossy semantic compression.** For each segment, compute a compressed representation (e.g., ~20 “summary tokens” for ~200 raw tokens).
-- **Hierarchical cache.**
-  - **L1:** Raw tokens and a small number of high‑priority summary tokens.
-  - **L2:** Compressed segment representations for recently or frequently useful content.
-  - **L3:** More aggressively compressed, cross‑session or rarely used semantic memories.
-- **Query‑time retrieval.** On each query, search L1 → L2 → L3 for relevant content. When only compressed content is available (cache miss), reconstruct the needed semantics via a learned decompressor and update the hierarchy based on success/failure.
-
-This is related to segment‑wise soft compression (e.g., CompLLM) and token‑selective KV‑cache methods (e.g., FastKV), but here compression and placement policies are explicitly trained for **semantic importance** and **cache hit‑rate**, not just efficiency. [web:21][web:26][web:17]
+Current LLMs treat their context window as a flat, uniform resource. As context grows long, attention dilutes and early-but-important information gets drowned out — this is **context rot**. Semantic Forgetfulness proposes treating LLM memory as a **hierarchical cache (L1/L2/L3)**, where content is allocated by *semantic importance* rather than recency. The model learns to actively compress low-priority content into lossy "gists" (forgetting), while keeping high-priority content in fast, accessible storage. Critically, **forgetting is a first-class, trainable, goal-directed operation** — not a side effect of limited memory.
 
 ---
 
-## 3. Architecture Sketch
+## 2. What We're Claiming (The Novel Contribution)
 
-We assume a base transformer LLM and add three main components around it: a segmenter/compressor, a hierarchical cache, and retrieval/reconstruction logic.
+> *"This is the first architecture that treats forgetting as a trainable, goal-directed operation rather than a passive consequence of context limits."*
 
-### 3.1 Segmenter and Compressor
-
-**Segmenter.**  
-Split the input token sequence into segments \(S_i\) of length \(L\) (e.g., 256 tokens).
-
-**Compressor.**  
-For each segment \(S_i\), produce a compressed representation \(C_i\) of length \(k \ll L\) (e.g., 16–32 pseudo‑tokens):
-
-- A small transformer encoder or pooling module ingests \(S_i\) and outputs \(k\) learned “summary tokens.”
-- These summary tokens are compatible with the base model’s embedding/hidden state space, so they can be inserted into the context as if they were regular tokens.
-
-Design considerations (inspired by CompLLM):
-
-- **Linear cost in input length.** Compression should scale linearly with the number of segments. [web:21][web:26]
-- **Reusable segments.** Compressed representations \(C_i\) are cached and reused for future queries over the same underlying content. [web:21][web:26]
-
-In contrast to pure autoencoding, the compressor is later trained to preserve **task performance**, not just reconstruct text.
-
-### 3.2 Hierarchical Cache (L1 / L2 / L3)
-
-Conceptually, we treat LLM memory like a cache hierarchy, similar to CPU/OS designs and recent LLM memory‑hierarchy work. [web:11][web:23]
-
-- **L1: Active Context**
-  - Contents:
-    - Current query tokens.
-    - A sliding window of recent raw tokens.
-    - A small budget of compressed “summary tokens” retrieved from lower levels.
-  - This is the actual context the base LLM sees during forward passes.
-
-- **L2: Semantic Working Set**
-  - Contents:
-    - Compressed segment representations \(C_i\) for segments that have been recently or frequently used.
-  - Behavior:
-    - “Demand paging”: when the model needs information from a segment, its \(C_i\) is brought into L1 (as pseudo‑tokens or after reconstruction).
-    - Promotion on use; demotion/eviction under pressure, similar to working‑set and pinning strategies. [web:11]
-
-- **L3: Long‑Term Compressed Memory**
-  - Contents:
-    - More aggressively compressed, higher‑level summaries (e.g., episode‑level vectors, cross‑session summaries).
-  - Implementation:
-    - Stored in an embedding index or vector database.
-    - Retrieved via similarity search against the current query or hidden state.
-
-As in traditional memory systems, performance depends on **L1/L2 hit rates**, not just raw L1 size. [web:11][web:23]
-
-### 3.3 Retrieval and Reconstruction
-
-For a new query \(Q\):
-
-1. **Initial L1 Build**
-   - Include:
-     - Query tokens.
-     - A small window of most recent raw tokens.
-     - Any obviously relevant compressed tokens (e.g., those attached to the last few dialogue turns).
-
-2. **Semantic Retrieval from L2/L3**
-   - Use \(Q\) (or its hidden representation from the base model) as a query into L2 and L3:
-     - Compute similarity between \(Q\)’s representation and \(C_i\) (L2) / higher‑level vectors (L3).
-     - Select top‑\(m\) compressed representations to bring into L1.
-
-3. **Cache Hits**
-   - For each selected compressed representation:
-     - **Option A (no reconstruction):** insert compressed tokens \(C_i\) directly into L1 as pseudo‑tokens.
-     - **Option B (with reconstruction):** run a decompressor to map \(C_i\) back into a sequence of “reconstructed tokens” or richer hidden‑state segments, and insert those into L1.
-
-4. **Cache Misses**
-   - If none of the available representations suffice to answer correctly (as judged during training or via a teacher model), treat this as a **cache miss**:
-     - Record which segments were relevant but poorly compressed or not retrieved.
-     - Use this signal to update the compressor, decompressor, and retrieval policy.
+Most prior work (CompLLM, FastKV, Pichay et al. 2026) treats compression as a static pre-processing step. This architecture is a **dynamic, self-correcting memory system** that learns its own importance model from deployment feedback via cache-miss signals. The L1 hit rate is the central training objective — clean, interpretable, and grounded.
 
 ---
 
-## 4. Training Objectives
+## 3. High-Level Architecture
 
-The system can be trained in two main stages, on top of a base language model.
+### Three Cache Levels
+- **L1 (Active Context):** Full semantic richness. Raw tokens, current query, high-priority retrieved content. What the LLM actually sees.
+- **L2 (Semantic Working Set):** Moderately compressed segment representations. Recently or frequently accessed content lives here.
+- **L3 (Long-Term Gist Store):** Aggressively compressed. Only the "gist" survives. Stored in an embedding index. Retrieval via similarity search.
 
-### 4.1 Compression Pretraining / Distillation
+### Core Loop (Inference)
+1. Query arrives → search L1 first
+2. L1 miss → search L2 (soft miss, moderate cost)
+3. L2 miss → search L3 (hard miss, reconstruction required)
+4. Reconstruction from gist → validate → promote to L2
+5. Repeated L2 hits → promote to L1
+6. All miss events logged as training signal
 
-Given a frozen or teacher LLM:
-
-- For each training example:
-  1. Run the teacher with full, uncompressed context to obtain target outputs.
-  2. Run the student architecture with:
-     - Segmented input.
-     - Earlier segments replaced by compressed representations \(C_i\) (or reconstructed variants).
-  3. Optimize the compressor (and decompressor, if used) to minimize:
-     - **Task loss:** cross‑entropy between student and teacher outputs (or ground truth).
-     - Optional: reconstruction loss between teacher’s hidden states and the student’s reconstructed hidden states for the same segments.
-
-This is analogous to CompLLM, which shows that 2× compression can preserve or even improve long‑context QA performance compared to uncompressed baselines. [web:21][web:26]
-
-### 4.2 Semantic Forgetfulness and Cache‑Miss Training
-
-To incorporate **intentional forgetfulness** and cache hierarchies:
-
-- **Simulate Cache Pressure**
-  - During training, enforce budgets on L1 and L2:
-    - Evict segments from L1 to L2 and from L2 to L3 based on simple policies (e.g., recency) or randomization.
-    - Restrict the model to using only compressed representations for many past segments.
-
-- **Cache‑Aware Loss**
-  - Task loss:
-    - Standard language modeling / QA objective over the model’s outputs.
-  - Cache‑miss penalties:
-    - Define a metric when relevant information was only accessible through deeper levels or when retrieval failed.
-    - Penalize configurations that require frequent, expensive reconstruction from L3 or fail on tasks because of over‑compression.
-  - Regularization:
-    - Encourage compressed representations to be low‑dimensional and sparsely informative to prevent trivial “memorize everything” solutions.
-
-Over time, the compressor and cache policy learn what information to keep at higher levels and what can be safely demoted or discarded, optimizing for **functional performance** rather than token‑level fidelity.
+### Two Kinds of Forgetting
+- **Passive forgetting:** Lossy compression. Retain the gist, discard details. Handled by the compressor module.
+- **Active forgetting / suppression:** Deliberate demotion of content that is *counterproductive* to the current task — even if technically available. A qualitatively different operation. Maps to retrieval inhibition in neuroscience.
 
 ---
 
-## 5. Minimal Prototype Plan
+## 4. Training Strategy (Open Questions Remain)
 
-A practical path to an initial prototype:
+### Pre-Training Approaches (pick one or combine)
+1. **Supervised:** Teach the model what L1/L2/L3-worthy content looks like via labeled corpora.
+2. **Self-supervised:** Model learns importance discernment from task performance signals alone.
+3. **Distillation:** A teacher model with full context generates targets; student model learns to match with compressed context. (Most immediately feasible — see CompLLM.)
 
-1. **Base Setup**
-   - Choose an open‑weights LLM.
-   - Implement a segmenter with fixed segment length (e.g., 256 tokens).
+### Core Training Objective
+**Maximize L1 cache hit rate.** A high hit rate signals the model has correctly assessed importance at encoding time. By definition, strong L1 allocation implies correct L3 allocation (whatever wasn't important enough for L1/L2).
 
-2. **Compressor Module**
-   - Implement a small transformer (or MLP + pooling) compressor that turns each segment into 16–32 pseudo‑tokens.
-   - At inference, for long contexts:
-     - Keep the most recent segment raw.
-     - Replace earlier segments with their compressed tokens in the prompt.
+### Cache-Miss Training Signal
+Cache misses during deployment (a query requires L3 content, meaning importance was misjudged at encoding) are logged and fed back as a training signal to refine the compressor and allocation policy. This is the primary mechanism for continuous learning.
 
-3. **Training / Evaluation**
-   - Use long‑context benchmarks (e.g., long‑document QA, needle‑in‑a‑haystack tasks).
-   - Compare:
-     - Full‑context baselines.
-     - Segment‑compressed models with various compression ratios.
-   - Optimize compressor parameters to preserve or improve accuracy at reduced effective context, similar to CompLLM. [web:21][web:26]
-
-4. **Add Simple L1/L2 Hierarchy**
-   - Maintain an in‑memory L2 store of compressed segments.
-   - Use recency/frequency heuristics to decide which compressed segments are:
-     - Kept in L1 as pseudo‑tokens.
-     - Stored only in L2.
-   - Log “miss” events where the model needed information from evicted segments.
-
-5. **Iterate toward Learned Policies**
-   - Replace heuristics with:
-     - A learned retrieval head for selecting which \(C_i\) to bring into L1 on each query.
-     - A cache‑miss‑aware objective that encourages better semantic compression and placement.
+### Open Question — Where Does Learning Live?
+- **Weight updates at inference:** Expensive, risky, but persistent learning.
+- **Cache state updates only:** Cheap, safe, but ephemeral (resets between sessions).
+- *This is unresolved and needs a design decision before implementation.*
 
 ---
 
-## 6. Future Directions
+## 5. The Reconstruction Problem (Highest Risk Area)
 
-Several extensions follow naturally from this architecture:
+When an L3 cache miss occurs, a **reconstructor module** reads the compressed gist and attempts to recover semantic meaning — potentially using surrounding context or source material as anchors.
 
-- **Empirical Study of Compression vs Context Rot**
-  - Measure how varying compression ratios (e.g., 2×, 4×, 8×) affect performance and robustness to long prompts.
-  - Compare naive long‑context models vs models with semantic compression for their tendency to “forget” early content. [web:19][web:21][web:26]
+### Why This Is Hard
+- If the reconstructor hallucinates, corrupted content propagates up to L1 — the highest-priority cache. Silent, confident misinformation is the worst failure mode.
+- Reconstruction from source material is more reliable but potentially slow (latency cost TBD).
 
-- **Importance Signals**
-  - Explore different signals for segment priority:
-    - Surprisal (model’s own prediction error).
-    - Gradient‑based saliency on downstream tasks.
-    - User‑provided markers (e.g., “pin this,” “this is the objective”).
-    - Task‑specific labels (e.g., constraints vs examples).
+### Mitigation Directions
+- Reconstructor should output **uncertainty-flagged representations** — system knows when a reconstruction is shaky before promoting it.
+- Conservative L3 allocation — be slow to demote to L3; prefer L2 when uncertain.
+- Structural "sanity anchors" alongside gists for post-reconstruction verification.
+- Frame L3 as **lossy by design**, not recoverable by default. Some things are meant to be forgotten.
 
-- **Neuroscience‑Inspired Dynamics**
-  - Incorporate ideas from synaptic consolidation and neuromodulated learning:
-    - Different timescales for updates at each level (fast L1, slow L2/L3).
-    - Stabilization of “important” compressed representations, akin to protected synapses. [web:13][web:18][web:20]
+---
 
-- **System‑Level Integration**
-  - Combine this semantic hierarchy with existing demand‑paging controllers and memory‑hierarchy proposals for LLMs:
-    - Use OS‑style paging to manage raw tokens.
-    - Use learned semantic compression to decide *what* is worth keeping close to the model. [web:11][web:23]
+## 6. Neuroscience Grounding
 
-This **semantic forgetfulness** framework aims to turn context management into a first‑class, trainable component of LLM architectures, aligning memory usage with what actually matters for downstream performance rather than simply expanding context windows.
+The cache analogy is useful but surface-level. These two mechanisms offer deeper, more principled inspiration:
 
+### Hippocampal-Neocortical Consolidation → Reconstruction / Replay
+The hippocampus holds fast, lossy episodic traces. Important memories are later *replayed* and consolidated into rich neocortical long-term storage. The reconstructor is a learned replay mechanism. This is well-studied and gives the architecture biological plausibility.
+
+### Synaptic Tagging and Capture → L1 Promotion Signal
+Synapses active during salient events get "tagged" and preferentially capture plasticity resources. This is the biological analog of L1 priority. What makes something tag-worthy: **novelty, reward signal, prediction error, emotional valence.** These map directly to computable importance signals (surprisal, gradient saliency, etc.).
+
+### Active Forgetting / Retrieval Inhibition → Suppression Mechanism
+The brain doesn't just passively forget — it *actively suppresses* memories that interfere with current goals. This is mediated by inhibitory interneurons. The architectural analog is a suppression mechanism that demotes content not just because it's old, but because it's *counterproductive to the current task*. No current LLM memory system does this.
+
+### Key Framing
+> Compression handles **passive forgetting**. Suppression handles **active forgetting**. Both are necessary for a complete system.
+
+---
+
+## 7. What We Currently Know / Can Be Confident About
+
+| Claim | Confidence | Notes |
+|---|---|---|
+| Context rot is real and attention-dilution driven | High | Well documented empirically |
+| Hierarchical cache architecture is feasible | Medium-High | CompLLM shows compression can preserve QA performance |
+| L1 hit rate is a valid training objective | High | Clean, interpretable, maps well to OS cache theory |
+| Reconstruction is the highest-risk component | High | Hallucination propagation is a genuine threat |
+| Active suppression is novel | High | Not present in any known prior work |
+| Continuous deployment learning is feasible | Low-Medium | Weight vs. state update question unresolved |
+
+---
+
+## 8. What This Does and Doesn't Fix
+
+- **Does:** Sidesteps context rot by curating what enters the active window in the first place.
+- **Doesn't:** Fix attention dilution within a flat context window — that's a different problem.
+- **Risk:** *Silent context exclusion* — if the importance model is wrong early, critical content never reaches L1. Potentially worse than context rot. Needs a safeguard.
+
+---
+
+## 9. Potential Benchmarks / Experiments
+
+- **Needle-in-a-Haystack:** Tests whether critical early information survives into L1. Direct test of the core claim.
+- **Long-Document QA (e.g., QuALITY, NarrativeQA):** Measures task performance degradation vs. compression ratio.
+- **Multi-Turn Dialogue Coherence:** Tests whether L2/L3 promotion correctly surfaces relevant prior turns.
+- **Cache Hit Rate Tracking:** Log L1/L2/L3 hit rates over a session and measure correlation with task accuracy.
+- **Ablation — Active vs. Passive Forgetting:** Compare suppression-enabled vs. compression-only variants.
+- **Hallucination Rate Post-Reconstruction:** Measure how often L3 reconstruction introduces factual errors before and after mitigation strategies.
+
+---
+
+## 10. Immediate Next Steps / Priorities
+
+1. **Resolve the learning locus question** — weight updates vs. cache state updates at inference. This is a foundational design decision.
+2. **Design the reconstructor** with uncertainty flagging as a first-class output, not an afterthought.
+3. **Prototype the compressor** on a small open-weights model using distillation (closest to CompLLM — fastest path to results).
+4. **Define L3 allocation conservatism policy** — what threshold triggers demotion to L3 vs. L2?
+5. **Survey neuroscience literature** on synaptic tagging and active forgetting for more precise architectural inspiration.
+6. **Frame the paper's central claim** around goal-directed forgetting as a trainable operation — not the cache hierarchy, which is the mechanism not the idea.
+
+---
+
+## 11. Open Questions (Parking Lot)
+
+- What is the right compression ratio at each level? (L1→L2, L2→L3)
+- At what context length does context rot become severe enough to justify this overhead? (Empirical threshold needed)
+- Can surprisal at encoding time serve as a reliable L1 priority signal without being too expensive?
+- Is active suppression best implemented as a separate module, or can it emerge from the same compressor trained with the right objective?
+- How do we handle cross-session memory? L3 persistence across conversations is a different engineering problem.
+- How does this interact with RAG (Retrieval-Augmented Generation)? Potential overlap or synergy.
+
+---
+
+*End of brain doc. This is a living document — update as design decisions are made.*
