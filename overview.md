@@ -59,7 +59,7 @@ Cache misses during deployment (a query requires L3 content, meaning importance 
 
 When an L3 cache miss occurs, a **reconstructor module** reads the compressed gist and attempts to recover semantic meaning — potentially using surrounding context or source material as anchors.
 
-### Why This Is Hard
+### Problem
 - If the reconstructor hallucinates, corrupted content propagates up to L1 — the highest-priority cache. Silent, confident misinformation is the worst failure mode.
 - Reconstruction from source material is more reliable but potentially slow (latency cost TBD).
 
