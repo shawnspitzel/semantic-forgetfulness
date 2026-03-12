@@ -37,7 +37,7 @@ Most prior work (CompLLM, FastKV, Pichay et al. 2026) treats compression as a st
 
 ## 4. Training Strategy (Open Questions Remain)
 
-### Pre-Training Approaches (pick one or combine)
+### Pre-Training Approaches
 1. **Supervised:** Teach the model what L1/L2/L3-worthy content looks like via labeled corpora (more structured and reliable, but then data sourcing becomes an issue).
 2. **Self-supervised:** Model learns importance discernment from task performance signals alone. This can lead to some interesting developments, like the model figuring out that surprise, relatability, or surprise are usual signals for importance, mimicking real brain activity.
 3. **Distillation:** A teacher model with full context generates targets; student model learns to match with compressed context. (Most immediately feasible — see CompLLM.)
