@@ -19,7 +19,7 @@ Most prior work (CompLLM, FastKV, Pichay et al. 2026) treats compression as a st
 ### Three Cache Levels
 - **L1 (Active Context):** Full semantic richness. Raw tokens, current query, high-priority retrieved content. What the LLM actually sees.
 - **L2 (Semantic Working Set):** Moderately compressed segment representations. Recently or frequently accessed content lives here.
-- **L3 (Long-Term Gist Store):** Aggressively compressed. Only the "gist" survives. Stored in an embedding index. Retrieval via similarity search.
+- **L3 (Long-Term Gist Store):** Aggressively compressed. Only the "gist" survives.
 
 ### Core Loop (Inference)
 1. Query arrives → search L1 first
@@ -30,8 +30,8 @@ Most prior work (CompLLM, FastKV, Pichay et al. 2026) treats compression as a st
 6. All miss events logged as training signal
 
 ### Two Kinds of Forgetting
-- **Passive forgetting:** Lossy compression. Retain the gist, discard details. Handled by the compressor module.
-- **Active forgetting / suppression:** Deliberate demotion of content that is *counterproductive* to the current task — even if technically available. A qualitatively different operation. Maps to retrieval inhibition in neuroscience.
+- **Passive forgetting:** Lossy compression. Retain the gist, discard details. Handled by the compressor module. (similar to CompLLM's "Concept Embeddings")
+- **Active forgetting / suppression:** Deliberate demotion of content that is *counterproductive* to the current task — even if technically available. A qualitatively different operation. Maps to retrieval inhibition in neuroscience. (insert reference)
 
 ---
 
