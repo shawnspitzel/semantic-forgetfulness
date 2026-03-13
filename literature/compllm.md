@@ -57,6 +57,8 @@ The authors evaluated CompLLM across various benchmarks (NarrativeQA, SQuAD, LOF
 ## 6. Conclusion
 CompLLM demonstrates that soft context compression does not have to be computationally expensive. By adopting a segment-wise approach, the authors provide a scalable way to handle 100k+ tokens while reducing VRAM usage and improving inference speed.
 
+## 7. Contribution
+We can use this work to introduce segmented compression, and showcase limitations of just using it alone in this case. In our work, we use segmented compression as a small feature of a much larger system.
 ---
 
 

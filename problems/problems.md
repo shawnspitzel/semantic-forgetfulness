@@ -1,9 +1,4 @@
 # Problems & Open Questions
-
-> This document bridges the gap from high-level architecture (overview.md) to mid-level design.
-> Each question here must be answered — or explicitly scoped out — before implementation begins.
-> Organized by subsystem. Answers to these questions become the implementation spec.
-
 ---
 
 ## 0. Foundational: Mapping the Abstraction to Transformers
