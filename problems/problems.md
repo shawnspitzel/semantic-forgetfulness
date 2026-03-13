@@ -5,7 +5,8 @@
 > Organized by subsystem. Answers to these questions become the implementation spec.
 
 ---
-
+## General:
+- What LLM will we use? Consider the fact this project is heavily catered toward Agentic workflows
 ## 0. Foundational: Mapping the Abstraction to Transformers
 
 These questions must be answered first. Everything else depends on them.
@@ -18,7 +19,7 @@ The most natural reading is that L1 = the KV cache (what the model actually atte
 This choice determines whether this is a wrapper or a new architecture.
 
 **P0.2 — Does this require modifying the base LLM?**
-Can Semantic Forgetfulness be implemented as an external wrapper around a frozen LLM (inject retrieved content into the context), or does it require architectural changes (new attention heads, modified KV management, training new weights)? The wrapper approach is faster to prototype but may limit the model's ability to learn the importance function end-to-end.
+Can Semantic Forgetfulness be implemented as an external wrapper around a frozen LLM (inject retrieved content into the context), or does it require architectural changes (new attention heads, modified KV management, training new weights)? The wrapper approach is faster to prototype but may limit the model's ability to learn the importance function end-to-end. The goal is to come up with some light-weight, flexible interface with a pre-existing LLM, but our heavy modifications to inference, deployment, and continuous learning may make this difficult.
 
 **P0.3 — What is the unit of compression?**
 The compressor needs a defined chunk to operate on. Options:
@@ -208,6 +209,9 @@ The overview notes potential overlap or synergy. Concretely: if a system already
 
 **P8.2 — Does the system require a specific model architecture?**
 Ideally the system works across model families (LLaMA, Mistral, GPT-style). But if L1 is defined as "a subset of KV cache entries," access to the KV cache is required, which varies by model and inference framework. Which frameworks expose the KV cache in a way that supports this? (vLLM, HuggingFace `generate()` with `past_key_values`, etc.)
+
+**P8.3 - How will we integrate our system into an agentic system? How will we test this?**
+- If we want to support agentic workflows, how can we integrate our system into agentic models and infrastructure? What is our use case for this model? Coding? Conversation? What makes the most sense given our tradeoffs?
 
 ---
 
