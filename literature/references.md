@@ -35,6 +35,9 @@ PubMed entry: https://pubmed.ncbi.nlm.nih.gov/37624895/
 Nature Scientific Reports.
 https://www.nature.com/articles/s41598-025-31685-9
 
+### LLM's Invent Their Own Compression (2025)
+https://www.rajan.sh/llm-compression
+
 ## Working memory and attention in neuroscience
 ### Working Memory Is Complex and Dynamic, Like Your Thoughts (2023)
 Buschman, T. J. & Kastner, S.

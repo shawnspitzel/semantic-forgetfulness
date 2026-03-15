@@ -122,6 +122,7 @@ Perhaps the ideal set-up is a Compression component coupled with a Supression co
 ## 10. Potential Hyperparameters
 - Promotion / Eviction Leniance (promote after 1 cache miss? after 2? 10? Can tweak to find the optimal value).
 - Cache Size
+- Conservity (How conservative do we want to be with L3 demotions?)
 
 ---
 

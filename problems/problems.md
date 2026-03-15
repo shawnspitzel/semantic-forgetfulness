@@ -161,6 +161,8 @@ How large a dataset? What's the minimum to see a useful compression signal?
 **P5.4 — How do we handle catastrophic forgetting if weight updates happen at inference?**
 If the importance model is updated from session data, it may overfit to recent sessions and forget how to handle earlier patterns. Mitigations: elastic weight consolidation (EWC), experience replay, low-rank adaptation (LoRA) updates only. Which approach is compatible with the latency budget?
 
+**P5.5 - How does pre-training work? Do we need it? Will fine-tuning also be necessary?**
+Pre-training is what should initially dictate how our model decides to allocate information into the cache, before any evictions or promotions have had the chance to take place. Should this allocation be done randomly, or via some trained allocator learned during pre-training? What are some other benefits to be had from pre-training?
 ---
 
 ## 6. Suppression (Active Forgetting)
