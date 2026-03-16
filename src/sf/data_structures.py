@@ -74,9 +74,9 @@ class MissEvent:
 @dataclass
 class FullMissEvent:
     """Reconciled at session end for fine-tuning."""
-    segment_input: torch.Tensor            # token embeddings (L2) or L2 CE (L3)
+    segment_input: torch.Tensor            # [T, D] for L2 (token embeddings) or [C_L2, D] for L3 miss
     context_window: torch.Tensor           # [W, D]
-    ce_produced: torch.Tensor
+    ce_produced: torch.Tensor              # [C_L2, D] or [C_L3, D] depending on miss_level
     miss_level: Literal["l2", "l3"]
     session_position: int
 
