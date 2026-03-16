@@ -38,7 +38,7 @@ class L2Store:
             return []
         ids = list(self._entries.keys())
         fps = torch.stack([self._entries[i].semantic_fingerprint for i in ids])
-        sims = F.cosine_similarity(query_vec.unsqueeze(0), fps)
+        sims = F.cosine_similarity(query_vec.unsqueeze(0), fps).clamp(-1.0, 1.0)
         passing = [(ids[i], sims[i].item()) for i in range(len(ids)) if sims[i].item() >= theta]
         if not passing:
             return []
