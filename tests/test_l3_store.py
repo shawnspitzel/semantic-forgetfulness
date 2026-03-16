@@ -29,3 +29,5 @@ def test_eviction_drops_permanently(cfg):
     store.insert(low); store.insert(high)
     dropped = store.insert(_entry())
     assert dropped is not None
+    assert store.get(dropped.id) is None        # evicted entry is gone
+    assert len(store) == 2                       # capacity respected

@@ -39,11 +39,11 @@ class L2Store:
         ids = list(self._entries.keys())
         fps = torch.stack([self._entries[i].semantic_fingerprint for i in ids])
         sims = F.cosine_similarity(query_vec.unsqueeze(0), fps)
-        mask = sims >= theta
-        if not mask.any():
+        passing = [(ids[i], sims[i].item()) for i in range(len(ids)) if sims[i].item() >= theta]
+        if not passing:
             return []
-        top = (sims * mask.float()).topk(min(top_k, int(mask.sum()))).indices
-        return [self._entries[ids[i]] for i in top.tolist()]
+        passing.sort(key=lambda x: x[1], reverse=True)
+        return [self._entries[uid] for uid, _ in passing[:top_k]]
 
     def get_neighbors(self, segment_id: uuid.UUID) -> list[L2Entry]:
         return [self._entries[nid] for nid in self.graph.get_segment_neighbors(segment_id)

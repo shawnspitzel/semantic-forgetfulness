@@ -17,6 +17,7 @@ class L3Store:
         self._index = Index(ndim=embed_dim, metric='cos')
         self._uuid_to_label: dict[uuid.UUID, int] = {}
         self._label_to_uuid: dict[int, uuid.UUID] = {}
+        self._evicted_labels: set[int] = set()   # labels removed but still in index
         self._next_label = 0
 
     def insert(self, entry: L3Entry) -> L3Entry | None:
@@ -46,7 +47,10 @@ class L3Store:
         matches = self._index.search(vec, count=k)
         seen, results = set(), []
         for label in matches.keys:
-            uid = self._label_to_uuid.get(int(label))
+            label = int(label)
+            if label in self._evicted_labels:
+                continue
+            uid = self._label_to_uuid.get(label)
             if uid and uid in self._entries:
                 results.append(self._entries[uid])
                 seen.add(uid)
@@ -62,6 +66,10 @@ class L3Store:
         e = self._entries.pop(segment_id, None)
         if e:
             self.graph.remove_segment(segment_id)
+            label = self._uuid_to_label.pop(segment_id, None)
+            if label is not None:
+                self._label_to_uuid.pop(label, None)
+                self._evicted_labels.add(label)  # can't delete from usearch; mark as dead
         return e
 
     def __len__(self) -> int:

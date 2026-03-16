@@ -35,3 +35,15 @@ def test_fingerprint_search(cfg):
     store.insert(e)
     results = store.search_by_fingerprint(target, top_k=1, theta=0.0)
     assert results[0].id == e.id
+
+def test_fingerprint_search_with_negative_theta(cfg):
+    """search_by_fingerprint must not return wrong entries when theta < 0."""
+    store = L2Store(10, cfg, EntityGraph())
+    # Insert an entry whose fingerprint is the negative of query (sim ≈ -1)
+    query = F.normalize(torch.randn(768), dim=0)
+    anti = F.normalize(-query, dim=0)
+    e = _entry(); e.semantic_fingerprint = anti
+    store.insert(e)
+    # With theta=-1.0 (accept everything), the anti-correlated entry should appear
+    results = store.search_by_fingerprint(query, top_k=1, theta=-1.0)
+    assert len(results) == 1 and results[0].id == e.id
