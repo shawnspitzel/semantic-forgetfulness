@@ -26,6 +26,9 @@ class EntityGraph:
     def remove_segment(self, segment_id: uuid.UUID) -> None:
         for e in self._seg_to_entities.pop(segment_id, set()):
             self._entity_to_segs[e].discard(segment_id)
+            if not self._entity_to_segs[e]:
+                if self._graph.has_node(e):
+                    self._graph.remove_node(e)
 
     def get_segment_neighbors(self, segment_id: uuid.UUID) -> set[uuid.UUID]:
         result: set[uuid.UUID] = set()

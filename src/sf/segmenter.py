@@ -9,12 +9,15 @@ class Segmenter:
         self.boundary_ids = boundary_token_ids or set()
 
     def segment(self, token_ids: list[int]) -> list[list[int]]:
+        return self._segment_with_boundaries(token_ids, self.boundary_ids)
+
+    def _segment_with_boundaries(self, token_ids: list[int], boundary_ids: set[int]) -> list[list[int]]:
         if not token_ids:
             return []
         segments, buf = [], []
         for tid in token_ids:
             buf.append(tid)
-            at_boundary = tid in self.boundary_ids
+            at_boundary = tid in boundary_ids
             if len(buf) >= self.cfg.segment_hard_cap or (
                 len(buf) >= self.cfg.segment_target and at_boundary
             ):
@@ -26,9 +29,9 @@ class Segmenter:
 
     def segment_text(self, text: str, tokenizer) -> list[list[int]]:
         ids = tokenizer.encode(text, add_special_tokens=False)
-        self.boundary_ids = {
+        boundary_ids = {
             tokenizer.encode(ch, add_special_tokens=False)[0]
             for ch in _SENTENCE_END_CHARS
             if tokenizer.encode(ch, add_special_tokens=False)
         }
-        return self.segment(ids)
+        return self._segment_with_boundaries(ids, boundary_ids)

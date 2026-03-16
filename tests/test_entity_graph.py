@@ -14,3 +14,4 @@ def test_remove_cleans_up():
     g.add_segment(sid, ["London"])
     g.remove_segment(sid)
     assert g.get_segment_neighbors(sid) == set()
+    assert not g._graph.has_node("London")  # graph node also removed
