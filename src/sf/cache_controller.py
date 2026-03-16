@@ -126,7 +126,7 @@ class CacheController:
                 continue
             sim = F.cosine_similarity(
                 query_vec.unsqueeze(0), meta.semantic_fingerprint.unsqueeze(0)
-            ).item()
+            ).clamp(-1.0, 1.0).item()
             if sim >= self.cfg.miss_detection_theta:
                 miss_type = "soft" if meta.tier == "l2" else "hard"
                 event = MissEvent(seg_id, miss_type, query_vec, time.time())
