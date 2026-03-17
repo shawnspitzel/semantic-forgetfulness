@@ -1,7 +1,6 @@
 # Base LLM
 model_name: meta-llama/Llama-3.2-3B-Instruct #alternative qwen model: "Qwen/Qwen2.5-3B-Instruct"
-embed_dim: 2048  # Qwen2.5-3B hidden_size; tests override to 768 (gpt2)
-
+embed_dim: 3072  
 # Segmentation
 segment_target: 20
 segment_hard_cap: 25

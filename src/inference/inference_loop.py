@@ -126,25 +126,26 @@ class InferenceLoop:
             sid = uuid.uuid4()
             n = len(seg_tokens)
 
-            # Current L1 ids for attention context
-            l1_ids = []
-            for entry in self.cache_controller.l1_entries():
-                l1_ids.extend(entry.tokens.tolist())
-            context_ids = l1_ids + seg_tokens
-            input_ids = torch.tensor([context_ids], device=self.device)
+            # Compute segment embeddings first (reused for both forward pass and admission)
+            emb_layer = self._llm.get_input_embeddings()
+            with torch.no_grad():
+                embeddings = emb_layer(torch.tensor([seg_tokens], device=self.device))[0]
+
+            # Build inputs_embeds from L1 context + current segment
+            l1_entries = self.cache_controller.l1_entries()
+            l1_embeds = [e.token_embeddings.to(self.device) for e in l1_entries]
+            segment_start = sum(e.token_embeddings.shape[0] for e in l1_entries)
+            segment_end = segment_start + n
+            combined = torch.cat(l1_embeds + [embeddings], dim=0).unsqueeze(0)
 
             _ctx = self._llm.disable_adapter() if hasattr(self._llm, "disable_adapter") else nullcontext()
             with torch.no_grad(), _ctx:
-                out = self._llm(input_ids, output_attentions=True)
+                out = self._llm(inputs_embeds=combined, output_attentions=True)
 
             attn = out.attentions[tsp_idx][0]
             importance = self.importance_scorer.score_from_attentions(
-                attn, segment_start=len(l1_ids), segment_end=len(context_ids)
+                attn, segment_start=segment_start, segment_end=segment_end
             )
-
-            with torch.no_grad():
-                emb_layer = self._llm.get_input_embeddings()
-                embeddings = emb_layer(torch.tensor([seg_tokens], device=self.device))[0]
 
             seg_text = self._tokenizer.decode(seg_tokens)
             fp = self.fingerprinter.encode(seg_text)
@@ -173,7 +174,14 @@ class InferenceLoop:
 
         self.process_text(query)
 
-        query_ids = self._tokenizer.encode(query, add_special_tokens=False)
+        # Format the current query as a proper instruction-tuned chat turn
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": query},
+        ]
+        formatted_ids = self._tokenizer.apply_chat_template(
+            messages, add_generation_prompt=True, return_tensors="pt"
+        ).to(self.device)
 
         if self.cfg.memory_enabled:
             query_fp = self.fingerprinter.encode(query)
@@ -183,29 +191,49 @@ class InferenceLoop:
                 if meta and meta.fault_count >= self.cfg.leniency:
                     self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
 
-            # KV rebuild: collect all L1 tokens in source_position order
-            context_ids: list[int] = []
-            for entry in self.cache_controller.l1_entries():
-                context_ids.extend(entry.tokens.tolist())
+            # Build inputs_embeds: L1 context embeddings + formatted query embeddings
+            emb_layer = self._llm.get_input_embeddings()
+            l1_embeds = [e.token_embeddings.to(self.device)
+                         for e in self.cache_controller.l1_entries()]
+            query_embeds = emb_layer(formatted_ids)[0]  # [T_fmt, hidden_dim]
+            inputs_embeds = torch.cat(l1_embeds + [query_embeds], dim=0).unsqueeze(0)
+            attention_mask = torch.ones(1, inputs_embeds.shape[1], device=self.device,
+                                        dtype=torch.long)
+
+            _ctx = self._llm.disable_adapter() if hasattr(self._llm, "disable_adapter") else nullcontext()
+            with torch.no_grad(), _ctx:
+                output = self._llm.generate(
+                    inputs_embeds=inputs_embeds,
+                    attention_mask=attention_mask,
+                    max_new_tokens=max_new_tokens,
+                    do_sample=False,
+                    pad_token_id=self._tokenizer.eos_token_id,
+                    repetition_penalty=1.3,
+                )
+
+            # generate() with inputs_embeds returns only new token IDs
+            response_ids = output[0].tolist()
         else:
-            # Flat context window — all tokens seen so far
-            context_ids = self.conversation_history[:]
+            # Flat context window: prepend history token IDs, then formatted query
+            input_ids = formatted_ids
+            if self.conversation_history:
+                history_ids = torch.tensor([self.conversation_history], device=self.device)
+                input_ids = torch.cat([history_ids, formatted_ids], dim=1)
+            attention_mask = torch.ones_like(input_ids)
 
-        input_ids = torch.tensor([context_ids + query_ids], device=self.device)
-        attention_mask = torch.ones_like(input_ids)
+            _ctx = self._llm.disable_adapter() if hasattr(self._llm, "disable_adapter") else nullcontext()
+            with torch.no_grad(), _ctx:
+                output = self._llm.generate(
+                    input_ids,
+                    attention_mask=attention_mask,
+                    max_new_tokens=max_new_tokens,
+                    do_sample=False,
+                    pad_token_id=self._tokenizer.eos_token_id,
+                    repetition_penalty=1.3,
+                )
 
-        _ctx = self._llm.disable_adapter() if hasattr(self._llm, "disable_adapter") else nullcontext()
-        with torch.no_grad(), _ctx:
-            output = self._llm.generate(
-                input_ids,
-                attention_mask=attention_mask,
-                max_new_tokens=max_new_tokens,
-                do_sample=False,
-                pad_token_id=self._tokenizer.eos_token_id,
-                repetition_penalty=1.3,
-            )
+            response_ids = output[0][input_ids.shape[1]:].tolist()
 
-        response_ids = output[0][input_ids.shape[1]:].tolist()
         response = self._tokenizer.decode(response_ids, skip_special_tokens=True)
         self.process_text(response)
         return response
