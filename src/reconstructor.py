@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoConfig
 from peft import get_peft_model, LoraConfig, TaskType
 
-from sf.config import Config
-from sf.data_structures import SanityAnchors, L2Entry, ReconstructionResult
+from config import Config
+from data_structures import SanityAnchors, L2Entry, ReconstructionResult
 
 
 class Reconstructor(nn.Module):
@@ -23,24 +23,28 @@ class Reconstructor(nn.Module):
     L2->L1 output has C_L2 slots (refines and injects as soft tokens).
     """
 
-    def __init__(self, cfg: Config, device: str | torch.device = "cpu"):
+    def __init__(self, cfg: Config, peft_model=None, device: str | torch.device = "cpu"):
         super().__init__()
         self.cfg = cfg
         self.device = torch.device(device)
+        self.adapter_name = "reconstructor"
 
-        hf_cfg = AutoConfig.from_pretrained(cfg.model_name)
-        self.hidden_dim = hf_cfg.hidden_size
+        if peft_model is None:
+            hf_cfg = AutoConfig.from_pretrained(cfg.model_name)
+            self.hidden_dim = hf_cfg.hidden_size
+            base = AutoModelForCausalLM.from_pretrained(cfg.model_name)
+            for p in base.parameters():
+                p.requires_grad_(False)
+            self.model = get_peft_model(base, LoraConfig(
+                task_type=TaskType.CAUSAL_LM,
+                r=cfg.lora_rank, lora_alpha=cfg.lora_rank * 2,
+                lora_dropout=0.05, bias="none",
+            ), adapter_name=self.adapter_name)
+        else:
+            self.hidden_dim = peft_model.config.hidden_size
+            self.model = peft_model
 
-        base = AutoModelForCausalLM.from_pretrained(cfg.model_name)
-        for p in base.parameters():
-            p.requires_grad_(False)
-        self.model = get_peft_model(base, LoraConfig(
-            task_type=TaskType.CAUSAL_LM,
-            r=cfg.lora_rank, lora_alpha=cfg.lora_rank * 2,
-            lora_dropout=0.05, bias="none",
-        ))
         self.projection = nn.Linear(self.hidden_dim, cfg.embed_dim, bias=False)
-
         self._fingerprinter = None  # set via set_fingerprinter()
         self.to(self.device)
 
@@ -60,6 +64,7 @@ class Reconstructor(nn.Module):
         C_in = ce_tensor.shape[0]
 
         # Run LLM forward to get initial C_out-slot reconstruction
+        self.model.set_adapter(self.adapter_name)
         x = ce_tensor.to(self.device)
         eos_id = self.model.config.eos_token_id or 0
         eos_embed = self.model.get_input_embeddings().weight[eos_id].detach()
@@ -122,4 +127,8 @@ class Reconstructor(nn.Module):
         )
 
     def parameters(self, recurse=True):
-        return [p for p in super().parameters(recurse=recurse) if p.requires_grad]
+        adapter_params = [
+            p for n, p in self.model.named_parameters()
+            if f".{self.adapter_name}." in n and p.requires_grad
+        ]
+        return iter(adapter_params + list(self.projection.parameters()))

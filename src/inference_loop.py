@@ -1,18 +1,19 @@
 from __future__ import annotations
 import uuid, time
+from contextlib import nullcontext
 from typing import Optional
 import torch
 import torch.nn.functional as F
 
-from sf.config import Config
-from sf.cache_controller import CacheController
-from sf.compressor import Compressor
-from sf.reconstructor import Reconstructor
-from sf.importance_scorer import ImportanceScorer
-from sf.fingerprinter import Fingerprinter
-from sf.entity_extractor import EntityExtractor
-from sf.segmenter import Segmenter
-from sf.data_structures import SanityAnchors
+from config import Config
+from cache_controller import CacheController
+from compressor import Compressor
+from reconstructor import Reconstructor
+from importance_scorer import ImportanceScorer
+from fingerprinter import Fingerprinter
+from entity_extractor import EntityExtractor
+from segmenter import Segmenter
+from data_structures import SanityAnchors
 
 
 class InferenceLoop:
@@ -45,20 +46,56 @@ class InferenceLoop:
 
     def _load_models(self) -> None:
         from transformers import AutoTokenizer, AutoModelForCausalLM
+        from peft import get_peft_model, LoraConfig, TaskType
+
         self._tokenizer = AutoTokenizer.from_pretrained(self.cfg.model_name)
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
 
-        self._llm = AutoModelForCausalLM.from_pretrained(self.cfg.model_name).to(self.device)
-        for p in self._llm.parameters():
+        # Llama-3.2-3B in bfloat16 ≈ 6.4 GB — too large for 8 GB GPUs once CUDA
+        # context and the MiniLM embedding model are accounted for. 4-bit NF4
+        # quantization brings it to ~1.6 GB while preserving generation quality.
+        try:
+            from transformers import BitsAndBytesConfig
+            bnb_cfg = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+            )
+            quant_kwargs: dict = {"quantization_config": bnb_cfg}
+        except Exception:
+            # bitsandbytes not available — fall back to bfloat16 (needs >8 GB VRAM)
+            quant_kwargs = {"dtype": torch.bfloat16}
+
+        base = AutoModelForCausalLM.from_pretrained(
+            self.cfg.model_name,
+            attn_implementation="eager",
+            device_map=str(self.device),
+            low_cpu_mem_usage=True,
+            **quant_kwargs,
+        )
+        for p in base.parameters():
             p.requires_grad_(False)
 
-        self._compressor = Compressor(self.cfg, device=self.device)
-        self._reconstructor = Reconstructor(self.cfg, device=self.device)
-        self._reconstructor.set_fingerprinter(self.fingerprinter)
-
-        self.cache_controller.compress_fn = self._compressor.compress
-        self.cache_controller.reconstruct_fn = self._reconstructor.reconstruct
+        if self.cfg.memory_enabled:
+            lora_cfg = LoraConfig(
+                task_type=TaskType.CAUSAL_LM,
+                r=self.cfg.lora_rank,
+                lora_alpha=self.cfg.lora_rank * 2,
+                lora_dropout=0.05,
+                bias="none",
+            )
+            peft_model = get_peft_model(base, lora_cfg, adapter_name="compressor")
+            peft_model.add_adapter("reconstructor", lora_cfg)
+            self._llm = peft_model
+            self._compressor = Compressor(self.cfg, peft_model=peft_model, device=self.device)
+            self._reconstructor = Reconstructor(self.cfg, peft_model=peft_model, device=self.device)
+            self._reconstructor.set_fingerprinter(self.fingerprinter)
+            self.cache_controller.compress_fn = self._compressor.compress
+            self.cache_controller.reconstruct_fn = self._reconstructor.reconstruct
+        else:
+            self._llm = base
 
     # ── Per-Turn API ─────────────────────────────────────────────────────
 
@@ -92,9 +129,15 @@ class InferenceLoop:
             )
 
     def _process_text_full(self, text: str) -> None:
+        tokens = self._tokenizer.encode(text, add_special_tokens=False)
+
+        if not self.cfg.memory_enabled:
+            self.conversation_history.extend(tokens)
+            self._total_tokens_seen += len(tokens)
+            return
+
         tsp_idx = (self.cfg.tsp_layer_index if self.cfg.tsp_layer_index >= 0
                    else self._llm.config.num_hidden_layers // 2)
-        tokens = self._tokenizer.encode(text, add_special_tokens=False)
 
         for seg_tokens in self.segmenter.segment(tokens):
             sid = uuid.uuid4()
@@ -107,7 +150,8 @@ class InferenceLoop:
             context_ids = l1_ids + seg_tokens
             input_ids = torch.tensor([context_ids], device=self.device)
 
-            with torch.no_grad():
+            _ctx = self._llm.disable_adapter() if hasattr(self._llm, "disable_adapter") else nullcontext()
+            with torch.no_grad(), _ctx:
                 out = self._llm(input_ids, output_attentions=True)
 
             attn = out.attentions[tsp_idx][0]
@@ -144,30 +188,38 @@ class InferenceLoop:
             self.process_text(query)
             return "[mock response — run with load_models=True for real inference]"
 
-        # Admit query into cache hierarchy (consistent with mock path)
         self.process_text(query)
 
-        query_fp = self.fingerprinter.encode(query)
-        misses = self.cache_controller.detect_misses(query_fp)
-        for miss in misses:
-            meta = self.cache_controller.get_metadata(miss.segment_id)
-            if meta and meta.fault_count >= self.cfg.leniency:
-                self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
-
-        # KV rebuild: collect all L1 tokens in source_position order
-        l1_ids: list[int] = []
-        for entry in self.cache_controller.l1_entries():
-            l1_ids.extend(entry.tokens.tolist())
-
         query_ids = self._tokenizer.encode(query, add_special_tokens=False)
-        input_ids = torch.tensor([l1_ids + query_ids], device=self.device)
 
-        with torch.no_grad():
+        if self.cfg.memory_enabled:
+            query_fp = self.fingerprinter.encode(query)
+            misses = self.cache_controller.detect_misses(query_fp)
+            for miss in misses:
+                meta = self.cache_controller.get_metadata(miss.segment_id)
+                if meta and meta.fault_count >= self.cfg.leniency:
+                    self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
+
+            # KV rebuild: collect all L1 tokens in source_position order
+            context_ids: list[int] = []
+            for entry in self.cache_controller.l1_entries():
+                context_ids.extend(entry.tokens.tolist())
+        else:
+            # Flat context window — all tokens seen so far
+            context_ids = self.conversation_history[:]
+
+        input_ids = torch.tensor([context_ids + query_ids], device=self.device)
+        attention_mask = torch.ones_like(input_ids)
+
+        _ctx = self._llm.disable_adapter() if hasattr(self._llm, "disable_adapter") else nullcontext()
+        with torch.no_grad(), _ctx:
             output = self._llm.generate(
                 input_ids,
+                attention_mask=attention_mask,
                 max_new_tokens=max_new_tokens,
                 do_sample=False,
                 pad_token_id=self._tokenizer.eos_token_id,
+                repetition_penalty=1.3,
             )
 
         response_ids = output[0][input_ids.shape[1]:].tolist()

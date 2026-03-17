@@ -44,6 +44,9 @@ class Config:
     # Importance scoring
     tsp_layer_index: int
 
+    # Memory layer
+    memory_enabled: bool
+
     # Training
     lora_rank: int
     min_session_length: int

@@ -1,6 +1,6 @@
 import pytest
 import torch
-from sf.config import Config
+from config import Config
 
 @pytest.fixture(scope="session")
 def cfg():

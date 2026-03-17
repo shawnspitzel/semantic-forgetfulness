@@ -1,7 +1,7 @@
 import uuid, time
 import torch
-from sf.stores.l1 import L1Store
-from sf.data_structures import L1Entry
+from stores.l1 import L1Store
+from data_structures import L1Entry
 
 def _entry(pos=0, importance=0.5, n=10, D=768):
     return L1Entry(

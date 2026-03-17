@@ -1,4 +1,4 @@
-from sf.segmenter import Segmenter
+from segmenter import Segmenter
 
 def test_hard_cap_respected(cfg):
     seg = Segmenter(cfg)

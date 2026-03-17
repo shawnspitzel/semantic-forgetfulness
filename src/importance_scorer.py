@@ -1,6 +1,6 @@
 from __future__ import annotations
 import torch
-from sf.config import Config
+from config import Config
 
 class ImportanceScorer:
     def __init__(self, cfg: Config):

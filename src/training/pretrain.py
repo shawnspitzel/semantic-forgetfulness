@@ -15,13 +15,13 @@ import torch.nn.functional as F
 from torch.optim import AdamW
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-from sf.config import Config
-from sf.compressor import Compressor
-from sf.reconstructor import Reconstructor
-from sf.segmenter import Segmenter
-from sf.fingerprinter import Fingerprinter
-from sf.entity_extractor import EntityExtractor
-from sf.data_structures import SanityAnchors
+from config import Config
+from compressor import Compressor
+from reconstructor import Reconstructor
+from segmenter import Segmenter
+from fingerprinter import Fingerprinter
+from entity_extractor import EntityExtractor
+from data_structures import SanityAnchors
 
 
 def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu") -> None:

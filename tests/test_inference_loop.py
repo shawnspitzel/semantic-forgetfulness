@@ -1,4 +1,4 @@
-from sf.inference_loop import InferenceLoop
+from inference_loop import InferenceLoop
 
 
 def test_session_id_assigned(cfg):

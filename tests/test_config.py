@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytest
-from sf.config import Config
+from config import Config
 
 def test_load_from_yaml():
     """Config.load() reads config.yaml from repo root."""

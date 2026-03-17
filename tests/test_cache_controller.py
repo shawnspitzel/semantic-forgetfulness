@@ -1,8 +1,8 @@
 import uuid, time
 import torch
 import torch.nn.functional as F
-from sf.cache_controller import CacheController
-from sf.data_structures import SanityAnchors
+from cache_controller import CacheController
+from data_structures import SanityAnchors
 
 def _anchors():
     return SanityAnchors(["First.", "Last."], ["Alice"], torch.randn(768))

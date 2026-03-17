@@ -4,14 +4,14 @@ from typing import Callable, Optional
 import torch
 import torch.nn.functional as F
 
-from sf.config import Config
-from sf.data_structures import (
+from config import Config
+from data_structures import (
     SegmentMetadata, SanityAnchors, MissEvent, L1Entry, L2Entry, L3Entry
 )
-from sf.entity_graph import EntityGraph
-from sf.stores.l1 import L1Store
-from sf.stores.l2 import L2Store
-from sf.stores.l3 import L3Store
+from entity_graph import EntityGraph
+from stores.l1 import L1Store
+from stores.l2 import L2Store
+from stores.l3 import L3Store
 
 
 class CacheController:

@@ -1,4 +1,4 @@
-from sf.entity_extractor import EntityExtractor
+from entity_extractor import EntityExtractor
 
 def test_extracts_names():
     entities = EntityExtractor().extract("Barack Obama visited Paris.")

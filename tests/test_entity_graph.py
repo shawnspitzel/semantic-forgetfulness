@@ -1,5 +1,5 @@
 import uuid
-from sf.entity_graph import EntityGraph
+from entity_graph import EntityGraph
 
 def test_shared_entity_links_segments():
     g = EntityGraph()

@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 """
-Semantic Forgetfulness — terminal chatbot MVP.
-
-Default model: meta-llama/Llama-3.2-3B-Instruct
-Requires: huggingface-cli login (gated model)
-
 Usage:
-  python main.py                         # mock mode (no model download)
-  python main.py --load-models           # real Llama inference
+  python main.py --load-models        
   python main.py --model gpt2 --load-models  # override model
 
 Commands:
@@ -19,12 +13,17 @@ from __future__ import annotations
 import argparse, sys, signal
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import torch
 
-from sf.config import Config
-from sf.inference_loop import InferenceLoop
-from sf.training.finetune import run_finetune
-from sf.data_structures import FullMissEvent
+from config import Config
+from inference_loop import InferenceLoop
+from training.finetune import run_finetune
+from data_structures import FullMissEvent
 
 
 def print_stats(loop: InferenceLoop) -> None:
@@ -100,7 +99,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default=None,
                         help="Override model (default: meta-llama/Llama-3.2-3B-Instruct)")
-    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--load-models", action="store_true",
                         help="Load LLM for real inference (requires HF login for Llama)")
     args = parser.parse_args()
