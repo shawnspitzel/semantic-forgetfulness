@@ -14,6 +14,7 @@ dependencies:
   - pyyaml
   - pip
   - pip:
+    - filelock>=3.12
     - transformers
     - peft
     - sentence-transformers
