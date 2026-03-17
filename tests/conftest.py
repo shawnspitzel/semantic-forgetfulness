@@ -27,6 +27,7 @@ def cfg():
         tau=0.7,
         reconstruction_retry_budget=3,
         tsp_layer_index=-1,
+        memory_enabled=True,
         lora_rank=16,
         min_session_length=20,
         fine_tuning_steps=1,
