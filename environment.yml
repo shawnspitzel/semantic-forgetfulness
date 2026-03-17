@@ -15,6 +15,7 @@ dependencies:
   - filelock>=3.12
   - pip
   - pip:
+    - jinja2
     - transformers
     - peft
     - sentence-transformers
