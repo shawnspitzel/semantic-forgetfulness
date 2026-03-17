@@ -1,5 +1,5 @@
 # Base LLM
-model_name: meta-llama/Llama-3.2-3B-Instruct #"Qwen/Qwen2.5-3B-Instruct"
+model_name: meta-llama/Llama-3.2-3B-Instruct #alternative qwen model: "Qwen/Qwen2.5-3B-Instruct"
 embed_dim: 2048  # Qwen2.5-3B hidden_size; tests override to 768 (gpt2)
 
 # Segmentation
@@ -17,8 +17,8 @@ l2_capacity: 200
 l3_capacity: 1000
 
 # Tier activation (total tokens in session)
-l2_activation_threshold: 800
-l3_activation_threshold: 3200
+l2_activation_threshold: 800 # 8000
+l3_activation_threshold: 3200 # 32000
 
 # Eviction scoring
 alpha: 0.6
