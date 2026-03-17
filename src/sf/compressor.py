@@ -60,4 +60,4 @@ class Compressor(nn.Module):
         return self.projection(eos_h)                           # [target_c, embed_dim]
 
     def parameters(self, recurse=True):
-        return (p for p in super().parameters(recurse=recurse) if p.requires_grad)
+        return [p for p in super().parameters(recurse=recurse) if p.requires_grad]

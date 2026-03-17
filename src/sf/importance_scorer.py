@@ -5,7 +5,7 @@ from sf.config import Config
 class ImportanceScorer:
     def __init__(self, cfg: Config):
         self.cfg = cfg
-        self._mean = 0.0; self._var = 1.0; self._n = 0
+        self._mean = 0.0; self._var = 0.0; self._n = 0
 
     def score_from_attentions(
         self, attn: torch.Tensor, segment_start: int, segment_end: int
@@ -31,4 +31,4 @@ class ImportanceScorer:
         return 0.0 if std < 1e-8 else (value - self._mean) / std
 
     def reset_session(self) -> None:
-        self._mean = 0.0; self._var = 1.0; self._n = 0
+        self._mean = 0.0; self._var = 0.0; self._n = 0

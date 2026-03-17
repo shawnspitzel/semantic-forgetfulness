@@ -65,7 +65,8 @@ class Reconstructor(nn.Module):
         eos_embed = self.model.get_input_embeddings().weight[eos_id].detach()
         eos_slots = eos_embed.unsqueeze(0).expand(C_out, -1)
         seq = torch.cat([x, eos_slots], dim=0).unsqueeze(0)     # [1, C_in+C_out, D]
-        with torch.enable_grad() if self.training else torch.no_grad():
+        ctx = torch.enable_grad() if self.training else torch.no_grad()
+        with ctx:
             out = self.model(inputs_embeds=seq, output_hidden_states=True)
         last_h = out.hidden_states[-1][0, C_in:, :]             # [C_out, hidden_dim]
         ce = self.projection(last_h)                             # [C_out, embed_dim]
@@ -74,10 +75,12 @@ class Reconstructor(nn.Module):
         if self._fingerprinter and len(anchors.boundary_sentences) >= 2:
             b0 = self._fingerprinter.encode(anchors.boundary_sentences[0]).to(self.device)
             b1 = self._fingerprinter.encode(anchors.boundary_sentences[-1]).to(self.device)
-            if E < C_out:
-                ce = ce.clone(); ce[E] = b0[:self.cfg.embed_dim]
-            if E + 1 < C_out:
-                ce[E + 1] = b1[:self.cfg.embed_dim]
+            # Only lock boundary slots if fingerprint dim matches CE slot dim
+            if b0.shape[0] == self.cfg.embed_dim:
+                if E < C_out:
+                    ce = ce.clone(); ce[E] = b0
+                if E + 1 < C_out:
+                    ce[E + 1] = b1
 
         # -- Layer 3: Context-Grounded Expansion --------------------------------
         grounding_used = False
@@ -88,7 +91,7 @@ class Reconstructor(nn.Module):
                     n[E + B:].mean(dim=0).to(self.device) for n in valid
                 ]).mean(dim=0)
                 ce = ce.clone()
-                ce[E + B:] = 0.5 * ce[E + B:] + 0.5 * neighbor_sem[:C_out - E - B]
+                ce[E + B:] = 0.5 * ce[E + B:] + 0.5 * neighbor_sem
                 grounding_used = True
 
         # Query-conditioning for L2->L1
@@ -119,4 +122,4 @@ class Reconstructor(nn.Module):
         )
 
     def parameters(self, recurse=True):
-        return (p for p in super().parameters(recurse=recurse) if p.requires_grad)
+        return [p for p in super().parameters(recurse=recurse) if p.requires_grad]
