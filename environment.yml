@@ -2,23 +2,23 @@ name: sf-mvp
 channels:
   - pytorch
   - nvidia
-  - defaults
+  - conda-forge
 dependencies:
   - python=3.11
   - pytorch
   - pytorch-cuda=12.4
-  - mkl=2023.*
-  - intel-openmp=2023.*
-  - bzip2
-  - numpy
-  - pyyaml
-  - filelock>=3.12
   - pip
   - pip:
+    - numpy
+    - pyyaml
+    - filelock>=3.12
     - jinja2
+    - sympy
+    - mpmath
     - transformers
     - peft
     - sentence-transformers
     - spacy
     - networkx
     - usearch
+    - pytest
