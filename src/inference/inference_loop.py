@@ -192,15 +192,33 @@ class InferenceLoop:
             query_fp = self.fingerprinter.encode(query)
             misses = self.cache_controller.detect_misses(query_fp)
             promoted_from: dict[str, int] = {}
+            promoted_ids: set = set()
+            ephemeral_entries: list = []
+
             for miss in misses:
                 meta = self.cache_controller.get_metadata(miss.segment_id)
-                if meta and meta.fault_count >= self.cfg.leniency:
-                    src_tier = meta.tier  # capture before promotion mutates it
+                if meta is None:
+                    continue
+
+                # Always reconstruct for inference (ephemeral, lossy read from L2/L3)
+                ephemeral = self.cache_controller.reconstruct_segment(
+                    miss.segment_id, query_fp
+                )
+                if ephemeral is not None:
+                    ephemeral_entries.append(ephemeral)
+
+                # Separately: promote (persist to L1) if fault threshold reached
+                if meta.fault_count >= self.cfg.leniency:
+                    src_tier = meta.tier
                     result = self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
                     if result:
                         promoted_from[src_tier] = promoted_from.get(src_tier, 0) + 1
+                        promoted_ids.add(miss.segment_id)
 
-            # Build inputs_embeds: L1 context embeddings + formatted query embeddings
+            # Exclude ephemeral entries for segments that were promoted
+            # (they're already in l1_entries() after promotion)
+            ephemeral_entries = [e for e in ephemeral_entries if e.id not in promoted_ids]
+
             emb_layer = self._llm.get_input_embeddings()
             l1_entries = self.cache_controller.l1_entries()
             native = sum(1 for e in l1_entries if not e.is_reconstructed)
@@ -208,11 +226,18 @@ class InferenceLoop:
             l2_hits = promoted_from.get("l2", 0)
             l3_hits = promoted_from.get("l3", 0)
             logger.info(
-                "[Inference] Reading L1=%d segs  native=%d  promoted=%d (from L2:%d L3:%d)",
-                len(l1_entries), native, promoted_now, l2_hits, l3_hits,
+                "[Inference] Reading L1=%d segs  native=%d  promoted=%d (from L2:%d L3:%d)"
+                "  ephemeral=%d",
+                len(l1_entries), native, promoted_now, l2_hits, l3_hits, len(ephemeral_entries),
             )
-            l1_embeds = [e.token_embeddings.to(self.device) for e in l1_entries]
-            query_embeds = emb_layer(formatted_ids)[0]  # [T_fmt, hidden_dim]
+
+            # Merge L1 + ephemeral entries sorted by source_position for context coherence
+            all_entries = sorted(
+                l1_entries + ephemeral_entries,
+                key=lambda e: e.source_position,
+            )
+            l1_embeds = [e.token_embeddings.to(self.device) for e in all_entries]
+            query_embeds = emb_layer(formatted_ids)[0]
             inputs_embeds = torch.cat(l1_embeds + [query_embeds], dim=0).unsqueeze(0)
             attention_mask = torch.ones(1, inputs_embeds.shape[1], device=self.device,
                                         dtype=torch.long)
