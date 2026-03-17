@@ -9,6 +9,7 @@ dependencies:
   - pytorch-cuda=12.4
   - mkl=2023.*
   - intel-openmp=2023.*
+  - bzip2
   - numpy
   - pyyaml
   - pip
