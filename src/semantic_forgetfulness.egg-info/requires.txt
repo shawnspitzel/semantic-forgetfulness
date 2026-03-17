@@ -1,0 +1,13 @@
+torch>=2.2
+transformers>=4.40
+sentence-transformers>=3.0
+spacy>=3.7
+hnswlib>=0.8
+networkx>=3.2
+peft>=0.10
+numpy>=1.26
+accelerate>=0.28
+
+[dev]
+pytest>=8.0
+pytest-cov

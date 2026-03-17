@@ -1,0 +1,9 @@
+pyproject.toml
+src/semantic_forgetfulness.egg-info/PKG-INFO
+src/semantic_forgetfulness.egg-info/SOURCES.txt
+src/semantic_forgetfulness.egg-info/dependency_links.txt
+src/semantic_forgetfulness.egg-info/requires.txt
+src/semantic_forgetfulness.egg-info/top_level.txt
+src/sf/__init__.py
+src/sf/stores/__init__.py
+src/sf/training/__init__.py
