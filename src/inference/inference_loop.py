@@ -192,7 +192,6 @@ class InferenceLoop:
             query_fp = self.fingerprinter.encode(query)
             misses = self.cache_controller.detect_misses(query_fp)
             promoted_from: dict[str, int] = {}
-            promoted_ids: set = set()
             ephemeral_entries: list = []
 
             for miss in misses:
@@ -200,24 +199,19 @@ class InferenceLoop:
                 if meta is None:
                     continue
 
-                # Always reconstruct for inference (ephemeral, lossy read from L2/L3)
-                ephemeral = self.cache_controller.reconstruct_segment(
-                    miss.segment_id, query_fp
-                )
-                if ephemeral is not None:
-                    ephemeral_entries.append(ephemeral)
-
-                # Separately: promote (persist to L1) if fault threshold reached
                 if meta.fault_count >= self.cfg.leniency:
+                    # Promote to L1 (persists); promoted entry appears in l1_entries() below
                     src_tier = meta.tier
                     result = self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
                     if result:
                         promoted_from[src_tier] = promoted_from.get(src_tier, 0) + 1
-                        promoted_ids.add(miss.segment_id)
-
-            # Exclude ephemeral entries for segments that were promoted
-            # (they're already in l1_entries() after promotion)
-            ephemeral_entries = [e for e in ephemeral_entries if e.id not in promoted_ids]
+                else:
+                    # Ephemeral read: reconstruct for this pass only, do not persist
+                    ephemeral = self.cache_controller.reconstruct_segment(
+                        miss.segment_id, query_fp
+                    )
+                    if ephemeral is not None:
+                        ephemeral_entries.append(ephemeral)
 
             emb_layer = self._llm.get_input_embeddings()
             l1_entries = self.cache_controller.l1_entries()
