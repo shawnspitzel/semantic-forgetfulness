@@ -67,7 +67,8 @@ def end_session(loop: InferenceLoop, cfg: Config) -> None:
         if event.miss_type == "soft":
             if not ctx_list:
                 continue
-            seg_emb = ctx_list[0]
+            pos = meta.source_position
+            seg_emb = ctx_list[pos] if pos < len(ctx_list) else ctx_list[-1]
             ce = loop._compressor.compress(seg_emb, cfg.C_L2).detach()
             full_events.append(FullMissEvent(
                 segment_input=seg_emb, context_window=ctx_window,
@@ -134,7 +135,6 @@ def main() -> None:
         if user_input == "/done":
             end_session(loop, cfg); print_stats(loop); break
 
-        loop.process_text(user_input)
         print(f"Assistant: {loop.generate_response(user_input)}")
 
 

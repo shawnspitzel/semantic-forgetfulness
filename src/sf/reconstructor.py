@@ -111,7 +111,7 @@ class Reconstructor(nn.Module):
                 F.normalize(fp.unsqueeze(0), dim=1),
             ).clamp(-1.0, 1.0).item()
         else:
-            fingerprint_sim = 0.8  # stub when fingerprinter not wired
+            fingerprint_sim = 0.0  # stub when fingerprinter not wired — conservative default
 
         return ReconstructionResult(
             ce_tensor=ce,

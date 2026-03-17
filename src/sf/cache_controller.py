@@ -115,7 +115,9 @@ class CacheController:
             original_length=self._metadata[evicted.id].original_length,
         )
         self._metadata[evicted.id].tier = "l3"
-        self._l3.insert(l3e)
+        permanently_evicted = self._l3.insert(l3e)
+        if permanently_evicted is not None:
+            self._metadata.pop(permanently_evicted.id, None)
 
     # ── Miss Detection ───────────────────────────────────────────────────
 

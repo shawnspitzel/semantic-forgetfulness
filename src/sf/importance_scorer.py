@@ -27,7 +27,7 @@ class ImportanceScorer:
         delta = value - self._mean
         self._mean += delta / self._n
         self._var += delta * (value - self._mean)
-        std = (self._var / max(self._n, 1)) ** 0.5
+        std = (self._var / max(self._n - 1, 1)) ** 0.5
         return 0.0 if std < 1e-8 else (value - self._mean) / std
 
     def reset_session(self) -> None:
