@@ -179,8 +179,11 @@ class InferenceLoop:
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": query},
         ]
-        formatted_ids = self._tokenizer.apply_chat_template(
+        _chat_output = self._tokenizer.apply_chat_template(
             messages, add_generation_prompt=True, return_tensors="pt"
+        )
+        formatted_ids = (
+            _chat_output.input_ids if hasattr(_chat_output, "input_ids") else _chat_output
         ).to(self.device)
 
         if self.cfg.memory_enabled:
