@@ -144,6 +144,9 @@ class InferenceLoop:
             self.process_text(query)
             return "[mock response — run with load_models=True for real inference]"
 
+        # Admit query into cache hierarchy (consistent with mock path)
+        self.process_text(query)
+
         query_fp = self.fingerprinter.encode(query)
         misses = self.cache_controller.detect_misses(query_fp)
         for miss in misses:
