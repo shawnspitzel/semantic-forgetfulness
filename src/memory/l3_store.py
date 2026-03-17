@@ -3,9 +3,9 @@ import math, time, uuid
 import numpy as np
 import torch
 from usearch.index import Index
-from config import Config
-from data_structures import L3Entry
-from entity_graph import EntityGraph
+from utils.config import Config
+from utils.data_structures import L3Entry
+from semantic.entity_graph import EntityGraph
 
 class L3Store:
     def __init__(self, capacity: int, cfg: Config, entity_graph: EntityGraph, embed_dim: int):

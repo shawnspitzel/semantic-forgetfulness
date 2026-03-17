@@ -1,7 +1,7 @@
 from __future__ import annotations
 import math, time, uuid
-from config import Config
-from data_structures import L1Entry
+from utils.config import Config
+from utils.data_structures import L1Entry
 
 class L1Store:
     def __init__(self, capacity: int, cfg: Config):

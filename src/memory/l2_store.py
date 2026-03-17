@@ -2,9 +2,9 @@ from __future__ import annotations
 import math, time, uuid
 import torch
 import torch.nn.functional as F
-from config import Config
-from data_structures import L2Entry
-from entity_graph import EntityGraph
+from utils.config import Config
+from utils.data_structures import L2Entry
+from semantic.entity_graph import EntityGraph
 
 class L2Store:
     def __init__(self, capacity: int, cfg: Config, entity_graph: EntityGraph):

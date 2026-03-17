@@ -1,5 +1,5 @@
 import torch
-from compressor import Compressor
+from compression.compressor import Compressor
 
 def test_l1_to_l2_shape(cfg):
     comp = Compressor(cfg, device="cpu")

@@ -1,7 +1,7 @@
 import uuid, time
 import torch
-from stores.l1 import L1Store
-from data_structures import L1Entry
+from memory.l1_store import L1Store
+from utils.data_structures import L1Entry
 
 def _entry(pos=0, importance=0.5, n=10, D=768):
     return L1Entry(

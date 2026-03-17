@@ -1,9 +1,9 @@
 import uuid, time
 import torch
 import torch.nn.functional as F
-from stores.l2 import L2Store
-from data_structures import L2Entry
-from entity_graph import EntityGraph
+from memory.l2_store import L2Store
+from utils.data_structures import L2Entry
+from semantic.entity_graph import EntityGraph
 
 def _entry(pos=0, importance=0.5, C=8, D=768):
     return L2Entry(

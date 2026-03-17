@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoModelForCausalLM, AutoConfig
 from peft import get_peft_model, LoraConfig, TaskType
-from config import Config
+from utils.config import Config
 
 
 class Compressor(nn.Module):

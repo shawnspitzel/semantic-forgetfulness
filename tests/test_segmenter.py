@@ -1,4 +1,4 @@
-from segmenter import Segmenter
+from inference.segmenter import Segmenter
 
 def test_hard_cap_respected(cfg):
     seg = Segmenter(cfg)

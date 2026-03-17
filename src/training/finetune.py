@@ -4,10 +4,10 @@ import torch
 import torch.nn.functional as F
 from torch.optim import AdamW
 
-from config import Config
-from data_structures import FullMissEvent
-from compressor import Compressor
-from reconstructor import Reconstructor
+from utils.config import Config
+from utils.data_structures import FullMissEvent
+from compression.compressor import Compressor
+from compression.reconstructor import Reconstructor
 
 
 def run_finetune(

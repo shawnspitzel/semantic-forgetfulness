@@ -19,10 +19,10 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import torch
 
-from config import Config
-from inference_loop import InferenceLoop
+from utils.config import Config
+from inference.inference_loop import InferenceLoop
 from training.finetune import run_finetune
-from data_structures import FullMissEvent
+from utils.data_structures import FullMissEvent
 
 
 def print_stats(loop: InferenceLoop) -> None:

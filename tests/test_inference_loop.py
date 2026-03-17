@@ -1,4 +1,4 @@
-from inference_loop import InferenceLoop
+from inference.inference_loop import InferenceLoop
 
 
 def test_session_id_assigned(cfg):

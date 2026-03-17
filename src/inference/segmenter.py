@@ -1,5 +1,5 @@
 from __future__ import annotations
-from config import Config
+from utils.config import Config
 
 _SENTENCE_END_CHARS = frozenset([".", "?", "!", "\n"])
 

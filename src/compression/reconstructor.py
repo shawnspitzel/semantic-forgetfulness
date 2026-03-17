@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoConfig
 from peft import get_peft_model, LoraConfig, TaskType
 
-from config import Config
-from data_structures import SanityAnchors, L2Entry, ReconstructionResult
+from utils.config import Config
+from utils.data_structures import SanityAnchors, L2Entry, ReconstructionResult
 
 
 class Reconstructor(nn.Module):

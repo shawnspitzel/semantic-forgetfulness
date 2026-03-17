@@ -1,5 +1,5 @@
 import torch
-from fingerprinter import Fingerprinter
+from semantic.fingerprinter import Fingerprinter
 
 def test_shape():
     assert Fingerprinter().encode("hello").shape == (384,)

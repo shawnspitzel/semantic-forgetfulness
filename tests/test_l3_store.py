@@ -1,8 +1,8 @@
 import uuid, time
 import torch
-from stores.l3 import L3Store
-from data_structures import L3Entry, SanityAnchors
-from entity_graph import EntityGraph
+from memory.l3_store import L3Store
+from utils.data_structures import L3Entry, SanityAnchors
+from semantic.entity_graph import EntityGraph
 
 def _entry(D=768, C3=5, C2=8):
     return L3Entry(

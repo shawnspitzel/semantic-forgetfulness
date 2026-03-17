@@ -1,5 +1,5 @@
 import torch
-from importance_scorer import ImportanceScorer
+from inference.importance_scorer import ImportanceScorer
 
 def test_returns_float(cfg):
     scorer = ImportanceScorer(cfg)

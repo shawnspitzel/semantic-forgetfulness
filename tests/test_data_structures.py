@@ -1,6 +1,6 @@
 import uuid, time
 import torch
-from data_structures import SanityAnchors, SegmentMetadata, L1Entry, L2Entry, L3Entry
+from utils.data_structures import SanityAnchors, SegmentMetadata, L1Entry, L2Entry, L3Entry
 
 def test_l3entry_has_l2_ce_at_demotion():
     """inference.md I5: L3Entry must store l2_ce_at_demotion for miss reconciliation."""

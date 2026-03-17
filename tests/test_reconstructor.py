@@ -1,6 +1,6 @@
 import torch
-from reconstructor import Reconstructor
-from data_structures import SanityAnchors, ReconstructionResult
+from compression.reconstructor import Reconstructor
+from utils.data_structures import SanityAnchors, ReconstructionResult
 
 def _anchors(cfg):
     fp = torch.nn.functional.normalize(torch.randn(768), dim=0)

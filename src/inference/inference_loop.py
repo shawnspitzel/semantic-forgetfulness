@@ -5,15 +5,15 @@ from typing import Optional
 import torch
 import torch.nn.functional as F
 
-from config import Config
-from cache_controller import CacheController
-from compressor import Compressor
-from reconstructor import Reconstructor
-from importance_scorer import ImportanceScorer
-from fingerprinter import Fingerprinter
-from entity_extractor import EntityExtractor
-from segmenter import Segmenter
-from data_structures import SanityAnchors
+from utils.config import Config
+from memory.cache_controller import CacheController
+from compression.compressor import Compressor
+from compression.reconstructor import Reconstructor
+from inference.importance_scorer import ImportanceScorer
+from semantic.fingerprinter import Fingerprinter
+from semantic.entity_extractor import EntityExtractor
+from inference.segmenter import Segmenter
+from utils.data_structures import SanityAnchors
 
 
 class InferenceLoop:
