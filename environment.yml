@@ -7,6 +7,7 @@ dependencies:
   - python=3.11
   - pytorch
   - pytorch-cuda=12.4
+  - mkl=2023.*
   - intel-openmp=2023.*
   - numpy
   - pyyaml
