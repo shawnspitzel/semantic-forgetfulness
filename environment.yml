@@ -12,9 +12,9 @@ dependencies:
   - bzip2
   - numpy
   - pyyaml
+  - filelock>=3.12
   - pip
   - pip:
-    - filelock>=3.12
     - transformers
     - peft
     - sentence-transformers
