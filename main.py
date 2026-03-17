@@ -10,7 +10,7 @@ Commands:
   /quit     exit without fine-tuning
 """
 from __future__ import annotations
-import argparse, sys, signal
+import argparse, logging, sys, signal
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -108,6 +108,17 @@ def main() -> None:
         # Override model_name by creating new Config with updated value
         import dataclasses
         cfg = dataclasses.replace(cfg, model_name=args.model)
+    # Suppress noisy library logs; show cache/inference activity at INFO
+    logging.basicConfig(level=logging.WARNING, format="%(message)s")
+    for _ns in ("memory.cache_controller", "inference.inference_loop"):
+        _lg = logging.getLogger(_ns)
+        _lg.setLevel(logging.INFO)
+        if not _lg.handlers:
+            _h = logging.StreamHandler(sys.stdout)
+            _h.setFormatter(logging.Formatter("  %(message)s"))
+            _lg.addHandler(_h)
+            _lg.propagate = False
+
     loop = InferenceLoop(cfg, device=args.device, load_models=args.load_models)
 
     print("Semantic Forgetfulness")

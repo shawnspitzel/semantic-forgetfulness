@@ -1,9 +1,11 @@
 from __future__ import annotations
-import uuid, time
+import logging, uuid
 from contextlib import nullcontext
 from typing import Optional
 import torch
 import torch.nn.functional as F
+
+logger = logging.getLogger(__name__)
 
 from utils.config import Config
 from memory.cache_controller import CacheController
@@ -189,15 +191,27 @@ class InferenceLoop:
         if self.cfg.memory_enabled:
             query_fp = self.fingerprinter.encode(query)
             misses = self.cache_controller.detect_misses(query_fp)
+            promoted_from: dict[str, int] = {}
             for miss in misses:
                 meta = self.cache_controller.get_metadata(miss.segment_id)
                 if meta and meta.fault_count >= self.cfg.leniency:
-                    self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
+                    src_tier = meta.tier  # capture before promotion mutates it
+                    result = self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
+                    if result:
+                        promoted_from[src_tier] = promoted_from.get(src_tier, 0) + 1
 
             # Build inputs_embeds: L1 context embeddings + formatted query embeddings
             emb_layer = self._llm.get_input_embeddings()
-            l1_embeds = [e.token_embeddings.to(self.device)
-                         for e in self.cache_controller.l1_entries()]
+            l1_entries = self.cache_controller.l1_entries()
+            native = sum(1 for e in l1_entries if not e.is_reconstructed)
+            promoted_now = sum(promoted_from.values())
+            l2_hits = promoted_from.get("l2", 0)
+            l3_hits = promoted_from.get("l3", 0)
+            logger.info(
+                "[Inference] Reading L1=%d segs  native=%d  promoted=%d (from L2:%d L3:%d)",
+                len(l1_entries), native, promoted_now, l2_hits, l3_hits,
+            )
+            l1_embeds = [e.token_embeddings.to(self.device) for e in l1_entries]
             query_embeds = emb_layer(formatted_ids)[0]  # [T_fmt, hidden_dim]
             inputs_embeds = torch.cat(l1_embeds + [query_embeds], dim=0).unsqueeze(0)
             attention_mask = torch.ones(1, inputs_embeds.shape[1], device=self.device,
