@@ -1,8 +1,10 @@
 from __future__ import annotations
-import time, uuid
+import logging, time, uuid
 from typing import Callable, Optional
 import torch
 import torch.nn.functional as F
+
+logger = logging.getLogger(__name__)
 
 from utils.config import Config
 from utils.data_structures import (
@@ -76,8 +78,10 @@ class CacheController:
 
         if total_tokens_seen < self.cfg.l2_activation_threshold:
             self._l1._entries[segment_id] = entry
+            logger.debug("[CC] Admitted  seg=%s → L1 (pre-threshold)  importance=%.4f", segment_id, importance_score)
             return
 
+        logger.debug("[CC] Admitted  seg=%s → L1  importance=%.4f", segment_id, importance_score)
         evicted = self._l1.insert(entry)
         if evicted:
             self._demote_l1_to_l2(evicted, total_tokens_seen)
@@ -96,6 +100,7 @@ class CacheController:
             grounding_used=False, entities=anchors.entities if anchors else [],
         )
         self._metadata[evicted.id].tier = "l2"
+        logger.debug("[CC] Demoted   seg=%s  L1 → L2", evicted.id)
         evicted_l2 = self._l2.insert(l2e)
         if evicted_l2 and total_tokens_seen >= self.cfg.l3_activation_threshold:
             self._demote_l2_to_l3(evicted_l2)
@@ -115,8 +120,10 @@ class CacheController:
             original_length=self._metadata[evicted.id].original_length,
         )
         self._metadata[evicted.id].tier = "l3"
+        logger.debug("[CC] Demoted   seg=%s  L2 → L3", evicted.id)
         permanently_evicted = self._l3.insert(l3e)
         if permanently_evicted is not None:
+            logger.debug("[CC] Permanently evicted  seg=%s  (L3 full)", permanently_evicted.id)
             self._metadata.pop(permanently_evicted.id, None)
 
     # ── Miss Detection ───────────────────────────────────────────────────
@@ -170,7 +177,9 @@ class CacheController:
             last_accessed=time.time(), source_position=meta.source_position,
             session_id=self.session_id, is_reconstructed=True,
         )
+        src_tier = meta.tier
         meta.tier = "l1"; meta.fault_count = 0
+        logger.debug("[CC] Promoted  seg=%s  %s → L1  fingerprint_sim=%.4f", segment_id, src_tier.upper(), result.fingerprint_sim)
         self._l1.insert(promoted)
         return promoted
 

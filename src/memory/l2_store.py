@@ -1,10 +1,12 @@
 from __future__ import annotations
-import math, time, uuid
+import logging, math, time, uuid
 import torch
 import torch.nn.functional as F
 from utils.config import Config
 from utils.data_structures import L2Entry
 from semantic.entity_graph import EntityGraph
+
+logger = logging.getLogger(__name__)
 
 class L2Store:
     def __init__(self, capacity: int, cfg: Config, entity_graph: EntityGraph):
@@ -19,6 +21,7 @@ class L2Store:
             evicted = self._evict()
         self._entries[entry.id] = entry
         self.graph.add_segment(entry.id, entry.entities)
+        logger.debug("[L2] Admitted  seg=%s  importance=%.4f  origin=%s", entry.id, entry.importance_score, entry.origin)
         return evicted
 
     def get(self, segment_id: uuid.UUID) -> L2Entry | None:
@@ -58,4 +61,6 @@ class L2Store:
 
     def _evict(self) -> L2Entry:
         tid = min(self._entries, key=lambda eid: self._score(self._entries[eid]))
+        entry = self._entries[tid]
+        logger.debug("[L2] Evicted   seg=%s  importance=%.4f  score=%.4f", entry.id, entry.importance_score, self._score(entry))
         return self.remove(tid)

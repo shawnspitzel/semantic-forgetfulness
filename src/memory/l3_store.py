@@ -1,11 +1,13 @@
 from __future__ import annotations
-import math, time, uuid
+import logging, math, time, uuid
 import numpy as np
 import torch
 from usearch.index import Index
 from utils.config import Config
 from utils.data_structures import L3Entry
 from semantic.entity_graph import EntityGraph
+
+logger = logging.getLogger(__name__)
 
 class L3Store:
     def __init__(self, capacity: int, cfg: Config, entity_graph: EntityGraph, embed_dim: int):
@@ -31,6 +33,7 @@ class L3Store:
         vec = entry.representative_vec.float().cpu().numpy().astype(np.float32)
         self._index.add(label, vec)
         self.graph.add_segment(entry.id, entry.sanity_anchors.entities)
+        logger.debug("[L3] Admitted  seg=%s  importance=%.4f  label=%d", entry.id, entry.importance_score, label)
         return dropped
 
     def get(self, segment_id: uuid.UUID) -> L3Entry | None:
@@ -81,4 +84,6 @@ class L3Store:
 
     def _evict(self) -> L3Entry:
         tid = min(self._entries, key=lambda eid: self._score(self._entries[eid]))
+        entry = self._entries[tid]
+        logger.debug("[L3] Evicted   seg=%s  importance=%.4f  score=%.4f  (permanent drop)", entry.id, entry.importance_score, self._score(entry))
         return self.remove(tid)

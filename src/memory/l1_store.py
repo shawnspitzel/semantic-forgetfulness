@@ -1,7 +1,9 @@
 from __future__ import annotations
-import math, time, uuid
+import logging, math, time, uuid
 from utils.config import Config
 from utils.data_structures import L1Entry
+
+logger = logging.getLogger(__name__)
 
 class L1Store:
     def __init__(self, capacity: int, cfg: Config):
@@ -14,6 +16,7 @@ class L1Store:
         if len(self._entries) >= self.capacity:
             evicted = self._evict()
         self._entries[entry.id] = entry
+        logger.debug("[L1] Admitted  seg=%s  importance=%.4f  pos=%d", entry.id, entry.importance_score, entry.source_position)
         return evicted
 
     def get(self, segment_id: uuid.UUID) -> L1Entry | None:
@@ -37,4 +40,6 @@ class L1Store:
 
     def _evict(self) -> L1Entry:
         tid = min(self._entries, key=lambda eid: self._score(self._entries[eid]))
-        return self._entries.pop(tid)
+        entry = self._entries.pop(tid)
+        logger.debug("[L1] Evicted   seg=%s  importance=%.4f  score=%.4f", entry.id, entry.importance_score, self._score(entry))
+        return entry
