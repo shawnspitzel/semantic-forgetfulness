@@ -44,7 +44,8 @@ class Compressor(nn.Module):
         self.projection = self.projection.to(dtype=next(self.model.parameters()).dtype)
 
         # Extract after to(device) so _eos_embed lands on the correct device
-        eos_id = self.model.config.eos_token_id or 0
+        raw = self.model.config.eos_token_id
+        eos_id = (raw[0] if isinstance(raw, list) else raw) or 0
         with torch.no_grad():
             self._eos_embed = (
                 self.model.get_input_embeddings().weight[eos_id].detach().clone()

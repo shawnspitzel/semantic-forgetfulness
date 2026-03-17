@@ -68,7 +68,8 @@ class Reconstructor(nn.Module):
         # Run LLM forward to get initial C_out-slot reconstruction
         self.model.set_adapter(self.adapter_name)
         x = ce_tensor.to(self.device)
-        eos_id = self.model.config.eos_token_id or 0
+        raw = self.model.config.eos_token_id
+        eos_id = (raw[0] if isinstance(raw, list) else raw) or 0
         eos_embed = self.model.get_input_embeddings().weight[eos_id].detach()
         eos_slots = eos_embed.unsqueeze(0).expand(C_out, -1)
         seq = torch.cat([x, eos_slots], dim=0).unsqueeze(0)     # [1, C_in+C_out, D]
