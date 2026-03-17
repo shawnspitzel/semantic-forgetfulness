@@ -145,11 +145,20 @@ class CacheController:
                 logger.info("[CC] Miss      seg=%.8s  tier=%s  sim=%.4f  faults=%d", seg_id, meta.tier, sim, meta.fault_count)
         return misses
 
-    # ── Promotion ────────────────────────────────────────────────────────
+    # ── Reconstruction & Promotion ────────────────────────────────────────
 
-    def promote_to_l1(self, segment_id: uuid.UUID, query_vec: torch.Tensor) -> Optional[L1Entry]:
+    def reconstruct_segment(
+        self, segment_id: uuid.UUID, query_vec: torch.Tensor
+    ) -> Optional[L1Entry]:
+        """
+        Reconstruct an L2 or L3 segment into an L1Entry. No state is mutated.
+        Returns None if reconstruct_fn is unavailable, the segment is missing,
+        or reconstruction quality is below reconstruction_theta.
+        """
+        if self.reconstruct_fn is None:
+            return None
         meta = self._metadata.get(segment_id)
-        if meta is None or self.reconstruct_fn is None:
+        if meta is None:
             return None
         anchors = self._anchors.get(segment_id)
 
@@ -159,7 +168,7 @@ class CacheController:
                 return None
             neighbors = self._l2.get_neighbors(segment_id)
             result = self.reconstruct_fn(l2e.ce_tensor, anchors, neighbors, query_vec, "l2_to_l1")
-        else:
+        elif meta.tier == "l3":
             l3e = self._l3.get(segment_id)
             if not l3e:
                 return None
@@ -168,21 +177,35 @@ class CacheController:
             if r_l3.fingerprint_sim < self.cfg.reconstruction_theta:
                 return None
             result = self.reconstruct_fn(r_l3.ce_tensor, anchors, neighbors, query_vec, "l2_to_l1")
+        else:
+            return None
 
         if result.fingerprint_sim < self.cfg.reconstruction_theta:
             return None
 
-        promoted = L1Entry(
-            id=segment_id, tokens=torch.zeros(result.ce_tensor.shape[0], dtype=torch.long),
-            token_embeddings=result.ce_tensor, importance_score=meta.importance_score,
-            last_accessed=time.time(), source_position=meta.source_position,
-            session_id=self.session_id, is_reconstructed=True,
+        return L1Entry(
+            id=segment_id,
+            tokens=torch.zeros(result.ce_tensor.shape[0], dtype=torch.long),
+            token_embeddings=result.ce_tensor,
+            importance_score=meta.importance_score,
+            last_accessed=time.time(),
+            source_position=meta.source_position,
+            session_id=self.session_id,
+            is_reconstructed=True,
         )
+
+    def promote_to_l1(self, segment_id: uuid.UUID, query_vec: torch.Tensor) -> Optional[L1Entry]:
+        """Reconstruct and persist to L1 — mutates tier metadata and inserts into L1 store."""
+        entry = self.reconstruct_segment(segment_id, query_vec)
+        if entry is None:
+            return None
+        meta = self._metadata[segment_id]
         src_tier = meta.tier
-        meta.tier = "l1"; meta.fault_count = 0
-        logger.info("[CC] Promoted  seg=%.8s  %s → L1  fingerprint_sim=%.4f", segment_id, src_tier.upper(), result.fingerprint_sim)
-        self._l1.insert(promoted)
-        return promoted
+        meta.tier = "l1"
+        meta.fault_count = 0
+        logger.info("[CC] Promoted  seg=%.8s  %s → L1", segment_id, src_tier.upper())
+        self._l1.insert(entry)
+        return entry
 
     # ── Accessors ────────────────────────────────────────────────────────
 
