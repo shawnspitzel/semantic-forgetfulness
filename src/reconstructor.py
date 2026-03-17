@@ -47,6 +47,8 @@ class Reconstructor(nn.Module):
         self.projection = nn.Linear(self.hidden_dim, cfg.embed_dim, bias=False)
         self._fingerprinter = None  # set via set_fingerprinter()
         self.to(self.device)
+        # Match projection dtype to backbone (e.g. bfloat16 when loaded with torch_dtype=bfloat16)
+        self.projection = self.projection.to(dtype=next(self.model.parameters()).dtype)
 
     def set_fingerprinter(self, fingerprinter) -> None:
         self._fingerprinter = fingerprinter

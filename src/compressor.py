@@ -40,6 +40,8 @@ class Compressor(nn.Module):
 
         self.projection = nn.Linear(self.hidden_dim, cfg.embed_dim, bias=False)
         self.to(self.device)
+        # Match projection dtype to backbone (e.g. bfloat16 when loaded with torch_dtype=bfloat16)
+        self.projection = self.projection.to(dtype=next(self.model.parameters()).dtype)
 
         # Extract after to(device) so _eos_embed lands on the correct device
         eos_id = self.model.config.eos_token_id or 0

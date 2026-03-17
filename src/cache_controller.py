@@ -108,7 +108,7 @@ class CacheController:
         l3e = L3Entry(
             id=evicted.id, concept_embeddings=ce_l3,
             representative_vec=ce_l3.mean(dim=0),
-            sanity_anchors=anchors or SanityAnchors([], [], torch.zeros(768)),
+            sanity_anchors=anchors or SanityAnchors([], [], torch.zeros(768, dtype=torch.bfloat16)),
             importance_score=evicted.importance_score, last_accessed=time.time(),
             source_position=evicted.source_position, session_id=self.session_id,
             l2_ce_at_demotion=evicted.ce_tensor,

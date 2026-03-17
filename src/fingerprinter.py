@@ -15,10 +15,10 @@ class Fingerprinter:
     def encode(self, text: str) -> torch.Tensor:
         return self._model.encode(
             text, convert_to_tensor=True, normalize_embeddings=True
-        ).to(self.device).float()
+        ).to(self.device).bfloat16()
 
     @torch.no_grad()
     def encode_batch(self, texts: list[str]) -> torch.Tensor:
         return self._model.encode(
             texts, convert_to_tensor=True, normalize_embeddings=True
-        ).to(self.device).float()
+        ).to(self.device).bfloat16()

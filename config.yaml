@@ -17,8 +17,8 @@ l2_capacity: 200
 l3_capacity: 1000
 
 # Tier activation (total tokens in session)
-l2_activation_threshold: 8000
-l3_activation_threshold: 32000
+l2_activation_threshold: 800
+l3_activation_threshold: 3200
 
 # Eviction scoring
 alpha: 0.6

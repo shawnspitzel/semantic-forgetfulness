@@ -17,7 +17,6 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import torch
 
 from config import Config

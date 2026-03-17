@@ -52,28 +52,11 @@ class InferenceLoop:
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
 
-        # Llama-3.2-3B in bfloat16 ≈ 6.4 GB — too large for 8 GB GPUs once CUDA
-        # context and the MiniLM embedding model are accounted for. 4-bit NF4
-        # quantization brings it to ~1.6 GB while preserving generation quality.
-        try:
-            from transformers import BitsAndBytesConfig
-            bnb_cfg = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.bfloat16,
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_quant_type="nf4",
-            )
-            quant_kwargs: dict = {"quantization_config": bnb_cfg}
-        except Exception:
-            # bitsandbytes not available — fall back to bfloat16 (needs >8 GB VRAM)
-            quant_kwargs = {"dtype": torch.bfloat16}
-
         base = AutoModelForCausalLM.from_pretrained(
             self.cfg.model_name,
             attn_implementation="eager",
+            torch_dtype=torch.bfloat16,
             device_map=str(self.device),
-            low_cpu_mem_usage=True,
-            **quant_kwargs,
         )
         for p in base.parameters():
             p.requires_grad_(False)
