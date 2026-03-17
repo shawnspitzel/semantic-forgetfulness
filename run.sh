@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
+# Usage: bash run.sh
 
 set -euo pipefail
 
-PARTITION="gpu"
+PARTITION="general-gpu"
 GRES="gpu:1"
 MEM="16G"
 TIME="02:00:00"
