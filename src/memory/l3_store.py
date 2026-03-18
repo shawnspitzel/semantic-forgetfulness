@@ -30,7 +30,7 @@ class L3Store:
         self._entries[entry.id] = entry
         self._uuid_to_label[entry.id] = label
         self._label_to_uuid[label] = entry.id
-        vec = entry.representative_vec.float().cpu().numpy().astype(np.float32)
+        vec = entry.representative_vec.detach().float().cpu().numpy().astype(np.float32)
         self._index.add(label, vec)
         self.graph.add_segment(entry.id, entry.sanity_anchors.entities)
         logger.debug("[L3] Admitted  seg=%s  importance=%.4f  label=%d", entry.id, entry.importance_score, label)
