@@ -1,9 +1,12 @@
 from __future__ import annotations
+import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoConfig
 from peft import get_peft_model, LoraConfig, TaskType
+
+logger = logging.getLogger(__name__)
 
 from utils.config import Config
 from utils.data_structures import SanityAnchors, L2Entry, ReconstructionResult
@@ -84,6 +87,12 @@ class Reconstructor(nn.Module):
             b0 = self._fingerprinter.encode(anchors.boundary_sentences[0]).to(self.device)
             b1 = self._fingerprinter.encode(anchors.boundary_sentences[-1]).to(self.device)
             # Only lock boundary slots if fingerprint dim matches CE slot dim
+            if b0.shape[0] != self.cfg.embed_dim:
+                logger.warning(
+                    "[Reconstructor] boundary fingerprint dim %d != embed_dim %d; "
+                    "boundary locking skipped",
+                    b0.shape[0], self.cfg.embed_dim,
+                )
             if b0.shape[0] == self.cfg.embed_dim:
                 if E < C_out:
                     ce = ce.clone(); ce[E] = b0
@@ -119,6 +128,10 @@ class Reconstructor(nn.Module):
                 F.normalize(fp.unsqueeze(0), dim=1),
             ).clamp(-1.0, 1.0).item()
         else:
+            logger.warning(
+                "[Reconstructor] fingerprinter not set — fingerprint_sim forced to 0.0; "
+                "reconstruction will always fail theta check"
+            )
             fingerprint_sim = 0.0  # stub when fingerprinter not wired — conservative default
 
         return ReconstructionResult(

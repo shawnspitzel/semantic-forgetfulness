@@ -28,7 +28,7 @@ miss_detection_theta: 0.7
 leniency: 2
 
 # Reconstructor
-reconstruction_theta: 0.75
+reconstruction_theta: 0.5
 tau: 0.7
 reconstruction_retry_budget: 3
 

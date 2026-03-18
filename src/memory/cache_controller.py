@@ -156,31 +156,43 @@ class CacheController:
         or reconstruction quality is below reconstruction_theta.
         """
         if self.reconstruct_fn is None:
+            logger.warning("[CC] Reconstruct seg=%.8s  FAILED: reconstruct_fn not wired", segment_id)
             return None
         meta = self._metadata.get(segment_id)
         if meta is None:
+            logger.warning("[CC] Reconstruct seg=%.8s  FAILED: no metadata", segment_id)
             return None
         anchors = self._anchors.get(segment_id)
 
         if meta.tier == "l2":
             l2e = self._l2.get(segment_id)
             if not l2e:
+                logger.warning("[CC] Reconstruct seg=%.8s  FAILED: not found in L2 store", segment_id)
                 return None
             neighbors = self._l2.get_neighbors(segment_id)
             result = self.reconstruct_fn(l2e.ce_tensor, anchors, neighbors, query_vec, "l2_to_l1")
         elif meta.tier == "l3":
             l3e = self._l3.get(segment_id)
             if not l3e:
+                logger.warning("[CC] Reconstruct seg=%.8s  FAILED: not found in L3 store", segment_id)
                 return None
             neighbors = self._l2.get_neighbors(segment_id)
             r_l3 = self.reconstruct_fn(l3e.concept_embeddings, anchors, neighbors, None, "l3_to_l2")
             if r_l3.fingerprint_sim < self.cfg.reconstruction_theta:
+                logger.warning(
+                    "[CC] Reconstruct seg=%.8s  FAILED L3→L2 quality  sim=%.4f < theta=%.4f",
+                    segment_id, r_l3.fingerprint_sim, self.cfg.reconstruction_theta,
+                )
                 return None
             result = self.reconstruct_fn(r_l3.ce_tensor, anchors, neighbors, query_vec, "l2_to_l1")
         else:
             return None
 
         if result.fingerprint_sim < self.cfg.reconstruction_theta:
+            logger.warning(
+                "[CC] Reconstruct seg=%.8s  FAILED quality  sim=%.4f < theta=%.4f",
+                segment_id, result.fingerprint_sim, self.cfg.reconstruction_theta,
+            )
             return None
 
         return L1Entry(
