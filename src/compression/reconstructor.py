@@ -83,21 +83,16 @@ class Reconstructor(nn.Module):
         ce = self.projection(last_h)                             # [C_out, embed_dim]
 
         # -- Layer 1: Constraint Shell -----------------------------------------
-        if self._fingerprinter and len(anchors.boundary_sentences) >= 2:
-            b0 = self._fingerprinter.encode(anchors.boundary_sentences[0]).to(self.device)
-            b1 = self._fingerprinter.encode(anchors.boundary_sentences[-1]).to(self.device)
-            # Only lock boundary slots if fingerprint dim matches CE slot dim
-            if b0.shape[0] != self.cfg.embed_dim:
-                logger.warning(
-                    "[Reconstructor] boundary fingerprint dim %d != embed_dim %d; "
-                    "boundary locking skipped",
-                    b0.shape[0], self.cfg.embed_dim,
-                )
-            if b0.shape[0] == self.cfg.embed_dim:
-                if E < C_out:
-                    ce = ce.clone(); ce[E] = b0
-                if E + 1 < C_out:
-                    ce[E + 1] = b1
+        # boundary_ce[0] and boundary_ce[1] are CE-space encodings of the first and last
+        # boundary sentences, computed via the compressor at admission time. They are injected
+        # into the designated boundary slots (E and E+1) of the C_L2 CE layout, grounding
+        # the reconstructed segment in its original boundary content.
+        if anchors.boundary_ce is not None and anchors.boundary_ce.shape[0] >= 2:
+            ce = ce.clone()
+            if E < C_out:
+                ce[E] = anchors.boundary_ce[0].to(self.device)
+            if E + 1 < C_out:
+                ce[E + 1] = anchors.boundary_ce[1].to(self.device)
 
         # -- Layer 3: Context-Grounded Expansion --------------------------------
         grounding_used = False

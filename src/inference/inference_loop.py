@@ -153,11 +153,27 @@ class InferenceLoop:
             fp = self.fingerprinter.encode(seg_text)
             entities = self.entity_extractor.extract(seg_text)
             sents = [s.strip() for s in seg_text.split(".") if s.strip()]
+
+            # Encode boundary sentences to CE space so the Reconstructor has properly-spaced
+            # boundary anchors for Layer 1 constraint locking.
+            boundary_ce = None
+            if self._compressor is not None and sents:
+                with torch.no_grad():
+                    bce_list = []
+                    for sent in [sents[0], sents[-1]]:
+                        t = self._tokenizer.encode(sent, add_special_tokens=False)
+                        if t:
+                            b_emb = emb_layer(torch.tensor([t], device=self.device))[0]
+                            bce_list.append(self._compressor.compress(b_emb, 1)[0])
+                    if len(bce_list) == 2:
+                        boundary_ce = torch.stack(bce_list).detach().cpu()
+
             anchors = SanityAnchors(
                 boundary_sentences=[sents[0] if sents else seg_text,
                                     sents[-1] if sents else seg_text],
                 entities=entities,
                 semantic_fingerprint=embeddings.mean(dim=0).detach().cpu(),
+                boundary_ce=boundary_ce,
             )
 
             self.conversation_history.extend(seg_tokens)

@@ -91,6 +91,11 @@ class CacheController:
             return
         anchors = self._anchors.get(evicted.id)
         ce = self.compress_fn(evicted.token_embeddings, self.cfg.C_L2)
+        # semantic_fingerprint must be in CE space for the quality check to work.
+        # The value set at admission (input embedding mean) is geometrically incompatible
+        # with the reconstructor's CE output, so we replace it here with the actual CE mean.
+        if anchors is not None:
+            anchors.semantic_fingerprint = ce.mean(dim=0).detach().cpu()
         l2e = L2Entry(
             id=evicted.id, ce_tensor=ce,
             semantic_fingerprint=self._metadata[evicted.id].semantic_fingerprint,
