@@ -194,6 +194,11 @@ class InferenceLoop:
             promoted_from: dict[str, int] = {}
             ephemeral_entries: list = []
 
+            emb_layer = self._llm.get_input_embeddings()
+            # query_embed: mean token embedding in LLM space (3072-dim) for reconstruction
+            # conditioning. query_fp (384-dim MiniLM) is only valid for detect_misses.
+            query_embed = emb_layer(formatted_ids)[0].mean(dim=0)
+
             for miss in misses:
                 meta = self.cache_controller.get_metadata(miss.segment_id)
                 if meta is None:
@@ -202,18 +207,16 @@ class InferenceLoop:
                 if meta.fault_count >= self.cfg.leniency:
                     # Promote to L1 (persists); promoted entry appears in l1_entries() below
                     src_tier = meta.tier
-                    result = self.cache_controller.promote_to_l1(miss.segment_id, query_fp)
+                    result = self.cache_controller.promote_to_l1(miss.segment_id, query_embed)
                     if result:
                         promoted_from[src_tier] = promoted_from.get(src_tier, 0) + 1
                 else:
                     # Ephemeral read: reconstruct for this pass only, do not persist
                     ephemeral = self.cache_controller.reconstruct_segment(
-                        miss.segment_id, query_fp
+                        miss.segment_id, query_embed
                     )
                     if ephemeral is not None:
                         ephemeral_entries.append(ephemeral)
-
-            emb_layer = self._llm.get_input_embeddings()
             l1_entries = self.cache_controller.l1_entries()
             native = sum(1 for e in l1_entries if not e.is_reconstructed)
             promoted_now = sum(promoted_from.values())
