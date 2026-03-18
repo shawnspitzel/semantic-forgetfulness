@@ -103,7 +103,7 @@ class InferenceLoop:
             anchors = SanityAnchors(
                 boundary_sentences=[text[:80], text[-80:]],
                 entities=self.entity_extractor.extract(text[:200]),
-                semantic_fingerprint=fp,
+                semantic_fingerprint=embeddings.mean(dim=0).detach().cpu(),
             )
             self.conversation_history.extend(seg_ids)
             self._embedding_history.append(embeddings.cpu())
@@ -157,7 +157,7 @@ class InferenceLoop:
                 boundary_sentences=[sents[0] if sents else seg_text,
                                     sents[-1] if sents else seg_text],
                 entities=entities,
-                semantic_fingerprint=fp,
+                semantic_fingerprint=embeddings.mean(dim=0).detach().cpu(),
             )
 
             self.conversation_history.extend(seg_tokens)

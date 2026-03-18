@@ -11,7 +11,7 @@ MissType = Literal["soft", "hard", "total"]
 class SanityAnchors:
     boundary_sentences: list[str]
     entities: list[str]
-    semantic_fingerprint: torch.Tensor     # [768]
+    semantic_fingerprint: torch.Tensor     # [D] LLM-space mean embedding for reconstruction quality check
 
 @dataclass
 class SegmentMetadata:
