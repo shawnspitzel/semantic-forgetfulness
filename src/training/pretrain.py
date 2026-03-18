@@ -68,12 +68,11 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu") -> None
                 out_full = llm(seg_tensor, output_hidden_states=True)
 
             seg_text = tokenizer.decode(seg_ids)
-            fp = fingerprinter.encode(seg_text)
             entities = extractor.extract(seg_text)
             sents = [s.strip() for s in seg_text.split(".") if s.strip()]
             anchors = SanityAnchors(
                 boundary_sentences=[sents[0] if sents else "", sents[-1] if sents else ""],
-                entities=entities, semantic_fingerprint=fp,
+                entities=entities, semantic_fingerprint=orig_embeds.mean(dim=0).detach().cpu(),
             )
 
             ce_l2 = compressor.compress(orig_embeds, cfg.C_L2)   # [C_L2, D]

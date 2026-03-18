@@ -22,7 +22,7 @@ class SegmentMetadata:
     source_position: int
     session_id: str
     is_reconstructed: bool
-    semantic_fingerprint: torch.Tensor     # [768]
+    semantic_fingerprint: torch.Tensor     # [D] MiniLM fingerprint for miss detection
     fault_count: int
     original_length: int
 
@@ -41,7 +41,7 @@ class L1Entry:
 class L2Entry:
     id: uuid.UUID
     ce_tensor: torch.Tensor                # [C_L2, D]
-    semantic_fingerprint: torch.Tensor     # [768]
+    semantic_fingerprint: torch.Tensor     # [D] MiniLM fingerprint for miss detection
     confidence_scores: Optional[list[tuple[int, float]]]
     importance_score: float
     last_accessed: float
@@ -68,7 +68,7 @@ class L3Entry:
 class MissEvent:
     segment_id: uuid.UUID
     miss_type: MissType
-    query_vec: torch.Tensor                # [768]
+    query_vec: torch.Tensor                # [D] MiniLM fingerprint
     timestamp: float
 
 @dataclass

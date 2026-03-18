@@ -29,7 +29,7 @@ def test_ephemeral_l2_reconstruction_included_in_context(cfg):
 
     fp = F.normalize(torch.ones(768), dim=0)
     sid = uuid.uuid4()
-    anchors = SanityAnchors(["First.", "Last."], ["Alice"], fp)
+    anchors = SanityAnchors(["First.", "Last."], ["Alice"], torch.zeros(cfg.embed_dim))
     fake_ce = torch.randn(cfg.C_L2, cfg.embed_dim)
 
     loop.cache_controller._anchors[sid] = anchors

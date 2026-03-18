@@ -3,7 +3,7 @@ from compression.reconstructor import Reconstructor
 from utils.data_structures import SanityAnchors, ReconstructionResult
 
 def _anchors(cfg):
-    fp = torch.nn.functional.normalize(torch.randn(768), dim=0)
+    fp = torch.nn.functional.normalize(torch.randn(cfg.embed_dim), dim=0)
     return SanityAnchors(["First.", "Last."], ["Alice"], fp)
 
 def test_l3_to_l2_output_shape(cfg):

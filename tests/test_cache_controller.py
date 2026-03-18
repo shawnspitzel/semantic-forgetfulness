@@ -4,22 +4,22 @@ import torch.nn.functional as F
 from memory.cache_controller import CacheController
 from utils.data_structures import SanityAnchors, L2Entry, ReconstructionResult
 
-def _anchors():
-    return SanityAnchors(["First.", "Last."], ["Alice"], torch.randn(768))
+def _anchors(cfg):
+    return SanityAnchors(["First.", "Last."], ["Alice"], torch.randn(cfg.embed_dim))
 
 def test_admission_assigns_l1(cfg):
     cc = CacheController(cfg=cfg, session_id="s1")
     sid = uuid.uuid4()
     cc.admit(sid, torch.randn(20, cfg.embed_dim), 0.5, 0,
-             torch.randn(768), _anchors(), total_tokens_seen=0)
+             torch.randn(cfg.embed_dim), _anchors(cfg), total_tokens_seen=0)
     assert cc.get_metadata(sid).tier == "l1"
 
 def test_miss_detection_flags_l2_segment(cfg):
     cc = CacheController(cfg=cfg, session_id="s1")
     sid = uuid.uuid4()
-    fp = F.normalize(torch.randn(768), dim=0)
+    fp = F.normalize(torch.randn(cfg.embed_dim), dim=0)
     cc.admit(sid, torch.randn(20, cfg.embed_dim), 0.5, 0,
-             fp, _anchors(), total_tokens_seen=0)
+             fp, _anchors(cfg), total_tokens_seen=0)
     cc._metadata[sid].tier = "l2"
     misses = cc.detect_misses(fp)
     assert any(m.segment_id == sid for m in misses)
@@ -28,9 +28,9 @@ def test_miss_detection_flags_l2_segment(cfg):
 def test_fault_count_increments(cfg):
     cc = CacheController(cfg=cfg, session_id="s1")
     sid = uuid.uuid4()
-    fp = F.normalize(torch.randn(768), dim=0)
+    fp = F.normalize(torch.randn(cfg.embed_dim), dim=0)
     cc.admit(sid, torch.randn(20, cfg.embed_dim), 0.5, 0,
-             fp, _anchors(), total_tokens_seen=0)
+             fp, _anchors(cfg), total_tokens_seen=0)
     cc._metadata[sid].tier = "l2"
     cc.detect_misses(fp)
     assert cc._metadata[sid].fault_count == 1
@@ -62,7 +62,7 @@ def test_reconstruct_segment_returns_entry_without_side_effects(cfg):
     """reconstruct_segment builds an L1Entry but leaves tier and L1 store unchanged."""
     cc = CacheController(cfg=cfg, session_id="s1", reconstruct_fn=_mock_reconstruct)
     sid = uuid.uuid4()
-    fp = F.normalize(torch.randn(768), dim=0)
+    fp = F.normalize(torch.randn(cfg.embed_dim), dim=0)
     cc.admit(sid, torch.randn(20, cfg.embed_dim), 0.5, 0, fp,
              SanityAnchors(["First.", "Last."], [], fp), total_tokens_seen=0)
     _inject_l2(cc, sid, fp, cfg)
@@ -79,7 +79,7 @@ def test_reconstruct_segment_returns_none_without_reconstruct_fn(cfg):
     """Returns None gracefully when no reconstruct_fn is set."""
     cc = CacheController(cfg=cfg, session_id="s1")
     sid = uuid.uuid4()
-    fp = F.normalize(torch.randn(768), dim=0)
+    fp = F.normalize(torch.randn(cfg.embed_dim), dim=0)
     cc.admit(sid, torch.randn(20, cfg.embed_dim), 0.5, 0, fp,
              SanityAnchors(["First.", "Last."], [], fp), total_tokens_seen=0)
     cc._metadata[sid].tier = "l2"
@@ -91,7 +91,7 @@ def test_promote_to_l1_delegates_to_reconstruct_segment(cfg):
     """promote_to_l1 still promotes correctly after refactor."""
     cc = CacheController(cfg=cfg, session_id="s1", reconstruct_fn=_mock_reconstruct)
     sid = uuid.uuid4()
-    fp = F.normalize(torch.randn(768), dim=0)
+    fp = F.normalize(torch.randn(cfg.embed_dim), dim=0)
     cc.admit(sid, torch.randn(20, cfg.embed_dim), 0.5, 0, fp,
              SanityAnchors(["First.", "Last."], [], fp), total_tokens_seen=0)
     _inject_l2(cc, sid, fp, cfg)

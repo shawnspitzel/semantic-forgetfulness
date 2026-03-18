@@ -9,7 +9,7 @@ def _entry(D=768, C3=5, C2=8):
         id=uuid.uuid4(),
         concept_embeddings=torch.randn(C3, D),
         representative_vec=torch.nn.functional.normalize(torch.randn(D), dim=0),
-        sanity_anchors=SanityAnchors(["A.", "B."], ["X"], torch.randn(768)),
+        sanity_anchors=SanityAnchors(["A.", "B."], ["X"], torch.randn(D)),
         importance_score=0.5, last_accessed=time.time(),
         source_position=0, session_id="s1",
         l2_ce_at_demotion=torch.randn(C2, D), original_length=20,
