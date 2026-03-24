@@ -6,6 +6,7 @@ for the frozen LLM backbone.
 
 Usage:
   python -m sf.training.pretrain --data-path data/train.txt --steps 500 --device cuda
+  python -m sf.training.pretrain --data-path data/train.txt --steps 500 --device cuda --wandb
 """
 from __future__ import annotations
 import argparse
@@ -24,8 +25,33 @@ from semantic.entity_extractor import EntityExtractor
 from utils.data_structures import SanityAnchors
 
 
-def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu") -> None:
+def _grad_norm(model) -> float:
+    total = 0.0
+    for p in model.parameters():
+        if p.grad is not None:
+            total += p.grad.norm().item() ** 2
+    return total ** 0.5
+
+
+def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu", use_wandb: bool = False) -> None:
     dev = torch.device(device)
+
+    if use_wandb:
+        import wandb
+        wandb.init(
+            project="semantic-forgetfulness",
+            config={
+                "model": cfg.model_name,
+                "lora_rank": cfg.lora_rank,
+                "C_L2": cfg.C_L2,
+                "C_L3": cfg.C_L3,
+                "E": cfg.E,
+                "B": cfg.B,
+                "lr": cfg.pretrain_learning_rate,
+                "steps": steps,
+                "device": device,
+            },
+        )
 
     tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
     if tokenizer.pad_token is None:
@@ -81,11 +107,14 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu") -> None
             # L_distill: match hidden states at mid-to-late layers
             out_ce = llm(inputs_embeds=ce_seq, output_hidden_states=True)
             l_distill = torch.tensor(0.0, device=dev)
+            layer_losses: dict[str, float] = {}
             for layer_idx in layer_range:
                 h_full = out_full.hidden_states[layer_idx][:, -1, :]
                 h_ce = out_ce.hidden_states[layer_idx][:, -1, :]
                 std = h_full.std().clamp(min=1e-6)
-                l_distill = l_distill + F.smooth_l1_loss(h_ce / std, h_full.detach() / std)
+                ll = F.smooth_l1_loss(h_ce / std, h_full.detach() / std)
+                l_distill = l_distill + ll
+                layer_losses[f"l_distill/layer_{layer_idx}"] = ll.item()
             l_distill = l_distill / max(len(layer_range), 1)
 
             # L_recon: reconstruct -> match original embedding mean
@@ -97,9 +126,32 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu") -> None
             loss = l_distill + l_recon
             optimizer.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(params, max_norm=1.0)
             optimizer.step()
 
             step += 1
+
+            if step % 10 == 0 and use_wandb:
+                import wandb
+                slot_norms = ce_l2.norm(dim=-1).detach()
+                confidence_scores = [s for _, s in result.confidence_scores] if result.confidence_scores else [0.0]
+                log = {
+                    "loss/total": loss.item(),
+                    "loss/l_distill": l_distill.item(),
+                    "loss/l_recon": l_recon.item(),
+                    "grad_norm/compressor": _grad_norm(compressor),
+                    "grad_norm/reconstructor": _grad_norm(reconstructor),
+                    "ce/slot_norm_mean": slot_norms.mean().item(),
+                    "ce/slot_norm_std": slot_norms.std().item(),
+                    "reconstruction/fingerprint_sim": result.fingerprint_sim if result.fingerprint_sim is not None else 0.0,
+                    "reconstruction/confidence_mean": sum(confidence_scores) / len(confidence_scores),
+                    "reconstruction/confidence_min": min(confidence_scores),
+                    "reconstruction/fallback": float(result.fallback),
+                    "reconstruction/grounding_used": float(result.grounding_used),
+                    **layer_losses,
+                }
+                wandb.log(log, step=step)
+
             if step % 50 == 0:
                 print(f"Step {step}/{steps}  L_distill={l_distill.item():.4f}  L_recon={l_recon.item():.4f}")
 
@@ -108,11 +160,16 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu") -> None
     reconstructor.model.save_pretrained("checkpoints/reconstructor")
     print("Adapters saved to checkpoints/")
 
+    if use_wandb:
+        import wandb
+        wandb.finish()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-path", type=Path, default=Path("data/train.txt"))
     parser.add_argument("--steps", type=int, default=500)
     parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--wandb", action="store_true", help="Enable Weights & Biases logging")
     args = parser.parse_args()
-    train(Config.load(), args.data_path, args.steps, args.device)
+    train(Config.load(), args.data_path, args.steps, args.device, use_wandb=args.wandb)

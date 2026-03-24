@@ -17,6 +17,8 @@ dependencies = [
     "numpy>=1.26",
     "accelerate>=0.28",
     "pyyaml>=6.0",
+    "datasets>=2.18",
+    "wandb>=0.17",
 ]
 
 [project.optional-dependencies]
