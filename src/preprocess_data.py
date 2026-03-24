@@ -2,9 +2,9 @@
 Download and mix pretraining data for Semantic Forgetfulness.
 
 Usage:
-    python scripts/preprocess_data.py              # full corpus (~50M tokens)
-    python scripts/preprocess_data.py --small      # ~1M tokens, faster
-    python scripts/preprocess_data.py --test       # skip download, use fallback
+    python src/preprocess_data.py              # full corpus (~50M tokens)
+    python src/preprocess_data.py --small      # ~1M tokens, faster
+    python src/preprocess_data.py --test       # skip download, use fallback
 
 Output: data/train.txt
 """
@@ -21,12 +21,25 @@ def get_text(ex: dict) -> str:
     return ex.get("text") or ex.get("content") or ex.get("output") or ""
 
 
+def _wiki_config() -> str:
+    """Return the most recent available English Wikipedia config name."""
+    from datasets import get_dataset_config_names
+    configs = get_dataset_config_names("wikimedia/wikipedia")
+    en_configs = sorted([c for c in configs if c.endswith(".en")], reverse=True)
+    if not en_configs:
+        raise RuntimeError("No English Wikipedia configs found on Hugging Face.")
+    chosen = en_configs[0]
+    print(f"Using Wikipedia config: {chosen}")
+    return chosen
+
+
 def download_small():
     """Wikipedia only — quick smoke-test corpus."""
     from datasets import load_dataset
 
-    print("Downloading Wikipedia (small run, ~5000 docs)...")
-    ds = load_dataset("wikimedia/wikipedia", "20220301.en", split="train", streaming=True)
+    config = _wiki_config()
+    print(f"Downloading Wikipedia ({config}, small run, ~5000 docs)...")
+    ds = load_dataset("wikimedia/wikipedia", config, split="train", streaming=True)
 
     os.makedirs("data", exist_ok=True)
     count = 0
@@ -49,7 +62,8 @@ def download_full():
     from datasets import load_dataset, interleave_datasets
 
     print("Loading datasets (streaming)...")
-    wiki = load_dataset("wikimedia/wikipedia", "20220301.en",
+    wiki_config = _wiki_config()
+    wiki = load_dataset("wikimedia/wikipedia", wiki_config,
                         split="train", streaming=True)
     owt  = load_dataset("EleutherAI/pile", data_files="*openwebtext2*",
                         split="train", streaming=True)
