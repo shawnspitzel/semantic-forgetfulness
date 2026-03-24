@@ -65,7 +65,7 @@ def download_full():
     wiki_config = _wiki_config()
     wiki = load_dataset("wikimedia/wikipedia", wiki_config,
                         split="train", streaming=True)
-    owt  = load_dataset("EleutherAI/pile", data_files="*openwebtext2*",
+    owt  = load_dataset("Skylion007/openwebtext",
                         split="train", streaming=True)
     chat = load_dataset("HuggingFaceH4/ultrachat_200k",
                         split="train_sft", streaming=True)
