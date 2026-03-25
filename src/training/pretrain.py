@@ -33,6 +33,39 @@ def _grad_norm(model) -> float:
     return total ** 0.5
 
 
+_CHUNK_CHARS = 10 * 1024 * 1024  # 10 MB per tokenization call
+
+
+def _stream_segments(data_path: Path, tokenizer, cfg: Config):
+    """
+    Yield segments one at a time by streaming the file in 10 MB text chunks.
+
+    Avoids two memory traps in the original code:
+      1. read_text() loads the entire 2 GB file into a Python string.
+      2. tokenizer.encode(full_text) produces a Python list[int] where each int
+         is a 28-byte heap object — ~14 GB for a 2 GB corpus.
+
+    At any point only one 10 MB chunk of text and a carry-over buf of at most
+    segment_hard_cap token IDs live in memory simultaneously.
+    """
+    segmenter = Segmenter(cfg)
+    buf: list[int] = []
+
+    with data_path.open(encoding="utf-8") as f:
+        while True:
+            chunk = f.read(_CHUNK_CHARS)
+            if not chunk:
+                break
+            buf.extend(tokenizer.encode(chunk, add_special_tokens=False))
+            new_segs = segmenter.segment(buf)
+            if len(new_segs) > 1:
+                yield from new_segs[:-1]
+                buf = new_segs[-1]   # carry the potentially-incomplete tail
+
+    if buf:
+        yield from segmenter.segment(buf)
+
+
 def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu", use_wandb: bool = False) -> None:
     dev = torch.device(device)
 
@@ -57,7 +90,9 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu", use_wan
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    llm = AutoModelForCausalLM.from_pretrained(cfg.model_name).to(dev)
+    llm = AutoModelForCausalLM.from_pretrained(
+        cfg.model_name, torch_dtype=torch.bfloat16
+    ).to(dev)
     for p in llm.parameters():
         p.requires_grad_(False)
 
@@ -66,32 +101,28 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu", use_wan
     fingerprinter = Fingerprinter(str(dev))
     reconstructor.set_fingerprinter(fingerprinter)
     extractor = EntityExtractor(max_entities=cfg.E)
-    segmenter = Segmenter(cfg)
 
     params = list(compressor.parameters()) + list(reconstructor.parameters())
     optimizer = AdamW(params, lr=cfg.pretrain_learning_rate)
 
     num_layers = llm.config.num_hidden_layers
-    layer_range = range(num_layers // 2, num_layers)
+    layer_range = list(range(num_layers // 2, num_layers))
     embed = llm.get_input_embeddings()
-
-    text = data_path.read_text(encoding="utf-8") if data_path.exists() else (
-        "The quick brown fox jumps over the lazy dog. " * 200  # fallback for testing
-    )
-    all_ids = tokenizer.encode(text, add_special_tokens=False)
-    segments = segmenter.segment(all_ids)
-    if not segments:
-        print("No segments found."); return
 
     step = 0
     while step < steps:
-        for seg_ids in segments:
+        for seg_ids in _stream_segments(data_path, tokenizer, cfg):
             if step >= steps:
                 break
             seg_tensor = torch.tensor([seg_ids], device=dev)
             with torch.no_grad():
                 orig_embeds = embed(seg_tensor)[0]                 # [N, D]
                 out_full = llm(seg_tensor, output_hidden_states=True)
+                h_full_layers = {
+                    layer_idx: out_full.hidden_states[layer_idx][:, -1, :].detach()
+                    for layer_idx in layer_range
+                }
+                del out_full   # free all 28 layers of hidden states immediately
 
             seg_text = tokenizer.decode(seg_ids)
             entities = extractor.extract(seg_text)
@@ -109,13 +140,14 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu", use_wan
             l_distill = torch.tensor(0.0, device=dev)
             layer_losses: dict[str, float] = {}
             for layer_idx in layer_range:
-                h_full = out_full.hidden_states[layer_idx][:, -1, :]
+                h_full = h_full_layers[layer_idx]
                 h_ce = out_ce.hidden_states[layer_idx][:, -1, :]
                 std = h_full.std().clamp(min=1e-6)
-                ll = F.smooth_l1_loss(h_ce / std, h_full.detach() / std)
+                ll = F.smooth_l1_loss(h_ce / std, h_full / std)
                 l_distill = l_distill + ll
                 layer_losses[f"l_distill/layer_{layer_idx}"] = ll.item()
             l_distill = l_distill / max(len(layer_range), 1)
+            del out_ce   # free all 28 layers of hidden states immediately
 
             # L_recon: reconstruct -> match original embedding mean
             result = reconstructor.reconstruct(ce_l2, anchors, [], None, "l3_to_l2")
