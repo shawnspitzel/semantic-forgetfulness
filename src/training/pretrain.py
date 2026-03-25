@@ -15,6 +15,7 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 from torch.optim import AdamW
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from utils.config import Config
@@ -116,6 +117,7 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu",
 
         params = list(compressor.parameters()) + list(reconstructor.parameters())
         optimizer = AdamW(params, lr=cfg.pretrain_learning_rate)
+        scheduler = CosineAnnealingLR(optimizer, T_max=steps, eta_min=1e-6)
 
         num_layers = llm.config.num_hidden_layers
         layer_range = list(range(num_layers // 2, num_layers))
@@ -184,6 +186,7 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu",
 
                 with profiler.phase("optimizer"):
                     optimizer.step()
+                    scheduler.step()
 
                 step += 1
 
