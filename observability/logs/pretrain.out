@@ -1,12 +1,13 @@
 Collecting en-core-web-sm==3.8.0
   Downloading https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl (12.8 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 54.9 MB/s  0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 63.4 MB/s  0:00:00
 [38;5;2m✔ Download and installation successful[0m
 You can now load the package via spacy.load('en_core_web_sm')
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   2%|▏         | 5/254 [00:00<00:09, 26.18it/s]Loading weights:   3%|▎         | 8/254 [00:00<00:09, 26.15it/s]Loading weights:   4%|▍         | 11/254 [00:00<00:09, 26.58it/s]Loading weights:   6%|▌         | 15/254 [00:00<00:08, 28.62it/s]Loading weights:   9%|▊         | 22/254 [00:00<00:07, 32.77it/s]Loading weights:  11%|█▏        | 29/254 [00:00<00:05, 39.57it/s]Loading weights:  13%|█▎        | 33/254 [00:00<00:06, 36.05it/s]Loading weights:  15%|█▍        | 37/254 [00:01<00:06, 35.46it/s]Loading weights:  16%|█▌        | 41/254 [00:01<00:05, 36.02it/s]Loading weights:  19%|█▉        | 48/254 [00:01<00:04, 44.38it/s]Loading weights:  21%|██        | 53/254 [00:01<00:04, 43.45it/s]Loading weights:  23%|██▎       | 58/254 [00:01<00:04, 44.97it/s]Loading weights:  25%|██▍       | 63/254 [00:01<00:05, 33.58it/s]Loading weights:  26%|██▋       | 67/254 [00:02<00:06, 27.33it/s]Loading weights:  28%|██▊       | 71/254 [00:02<00:06, 29.03it/s]Loading weights:  30%|██▉       | 75/254 [00:02<00:06, 27.68it/s]Loading weights:  32%|███▏      | 81/254 [00:02<00:05, 34.19it/s]Loading weights:  33%|███▎      | 85/254 [00:02<00:05, 33.58it/s]Loading weights:  35%|███▌      | 89/254 [00:02<00:06, 26.85it/s]Loading weights:  37%|███▋      | 93/254 [00:02<00:05, 27.53it/s]Loading weights:  40%|████      | 102/254 [00:02<00:03, 39.98it/s]Loading weights: 100%|██████████| 254/254 [00:02<00:00, 84.71it/s]
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 35505.86it/s]
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 10153.38it/s]
-Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 3045.89it/s]
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   4%|▎         | 9/254 [00:00<00:03, 79.77it/s]Loading weights:   7%|▋         | 17/254 [00:00<00:03, 70.04it/s]Loading weights:  10%|▉         | 25/254 [00:00<00:03, 67.46it/s]Loading weights:  14%|█▍        | 36/254 [00:00<00:03, 64.50it/s]Loading weights:  17%|█▋        | 43/254 [00:00<00:03, 60.92it/s]Loading weights:  21%|██        | 53/254 [00:00<00:03, 60.30it/s]Loading weights:  24%|██▍       | 61/254 [00:00<00:03, 61.79it/s]Loading weights:  27%|██▋       | 68/254 [00:01<00:03, 61.27it/s]Loading weights:  43%|████▎     | 108/254 [00:01<00:01, 125.85it/s]Loading weights:  47%|████▋     | 120/254 [00:01<00:01, 105.87it/s]Loading weights:  52%|█████▏    | 131/254 [00:01<00:01, 93.35it/s] Loading weights:  56%|█████▌    | 142/254 [00:01<00:01, 91.95it/s]Loading weights:  60%|█████▉    | 152/254 [00:01<00:01, 90.20it/s]Loading weights:  63%|██████▎   | 161/254 [00:01<00:01, 88.68it/s]Loading weights:  69%|██████▊   | 174/254 [00:02<00:00, 91.94it/s]Loading weights:  72%|███████▏  | 184/254 [00:02<00:00, 71.32it/s]Loading weights:  77%|███████▋  | 195/254 [00:02<00:00, 79.40it/s]Loading weights:  80%|████████  | 204/254 [00:02<00:00, 81.82it/s]Loading weights:  84%|████████▍ | 213/254 [00:02<00:00, 81.72it/s]Loading weights:  87%|████████▋ | 222/254 [00:02<00:00, 68.90it/s]Loading weights: 100%|██████████| 254/254 [00:02<00:00, 91.02it/s]
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 61006.31it/s]
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 53034.31it/s]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 2477.88it/s]
 [1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
 Key                     | Status     |  | 
 ------------------------+------------+--+-
@@ -14,5 +15,26 @@ embeddings.position_ids | UNEXPECTED |  |
 
 [3mNotes:
 - UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
-/var/spool/slurm/job23338609/slurm_script: line 20: 477662 Killed                  PYTHONPATH=src python -m training.pretrain --data-path data/train.txt --steps 1000 --device cuda
-slurmstepd: error: Detected 1 oom_kill event in StepId=23338609.batch. Some of the step tasks have been OOM Killed.
+Token indices sequence length is longer than the specified maximum sequence length for this model (2781999 > 131072). Running this sequence through the model will result in indexing errors
+Step 50/1000  L_distill=0.3802  L_recon=0.3008
+Step 100/1000  L_distill=0.3302  L_recon=0.3711
+Step 150/1000  L_distill=0.3104  L_recon=0.6562
+Step 200/1000  L_distill=0.3693  L_recon=0.2383
+Step 250/1000  L_distill=0.3181  L_recon=0.5859
+Step 300/1000  L_distill=0.2885  L_recon=0.3477
+Step 350/1000  L_distill=0.2898  L_recon=0.2734
+Step 400/1000  L_distill=0.3262  L_recon=0.2500
+Step 450/1000  L_distill=0.3177  L_recon=0.3867
+Step 500/1000  L_distill=0.3673  L_recon=0.2773
+Step 550/1000  L_distill=0.3121  L_recon=0.3633
+Step 600/1000  L_distill=0.3545  L_recon=0.4883
+Step 650/1000  L_distill=0.3119  L_recon=0.2344
+Step 700/1000  L_distill=0.2988  L_recon=0.2812
+Step 750/1000  L_distill=0.3521  L_recon=0.3086
+Step 800/1000  L_distill=0.2937  L_recon=0.1562
+Step 850/1000  L_distill=0.3684  L_recon=0.2930
+Step 900/1000  L_distill=0.2097  L_recon=0.4102
+Step 950/1000  L_distill=0.3224  L_recon=0.2383
+Step 1000/1000  L_distill=0.3093  L_recon=0.2422
+Adapters saved to checkpoints/
+Profiling artifacts: observability/run_20260324_214929/
