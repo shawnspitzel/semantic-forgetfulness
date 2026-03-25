@@ -260,3 +260,90 @@ class DeepProfiler:
             (self._run_dir / "memory_flamegraph.html").write_text(html, encoding="utf-8")
         except Exception:
             pass
+
+
+# ── TrainingProfiler ──────────────────────────────────────────────────────────
+
+class TrainingProfiler:
+    """
+    Main entry point for training profiling.
+
+    Usage:
+        profiler = TrainingProfiler(use_wandb=True, profile_steps=0)
+        with profiler.phase("data_load"):
+            ...
+        profiler.log_step(step, metrics_dict, n_tokens=len(seg), n_segments=1)
+        profiler.step()   # call every training step
+        profiler.finish()   # call after checkpoint save
+    """
+
+    def __init__(self, use_wandb: bool, profile_steps: int = 0) -> None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.run_dir = Path("observability") / f"run_{timestamp}"
+        self.run_dir.mkdir(parents=True, exist_ok=True)
+
+        self._use_wandb = use_wandb
+        self._log_cadence = 10
+        self._phase_timer = PhaseTimer()
+        self._memory_sampler = MemorySampler()
+        self._throughput_tracker = ThroughputTracker()
+        self._disk_writer = DiskWriter(self.run_dir / "metrics.jsonl")
+        self._report_generator = ReportGenerator(self.run_dir)
+        self._deep_profiler: DeepProfiler | None = (
+            DeepProfiler(self.run_dir, profile_steps) if profile_steps > 0 else None
+        )
+
+        if self._deep_profiler is not None:
+            self._deep_profiler.start()
+
+    def phase(self, name: str) -> contextlib.AbstractContextManager[None]:
+        return self._phase_timer.phase(name)
+
+    def log_step(self, step: int, metrics: dict, n_tokens: int, n_segments: int) -> None:
+        self._throughput_tracker.record(n_tokens, n_segments)
+
+        if step % self._log_cadence != 0:
+            return
+
+        phase_ms = self._phase_timer.flush()
+        memory = self._memory_sampler.sample()
+        throughput = self._throughput_tracker.flush()
+
+        record = {
+            "step": step,
+            "wall_time": time.time(),
+            "phase_ms": phase_ms,
+            "memory": memory,
+            "throughput": throughput,
+            "metrics": metrics,
+        }
+        self._disk_writer.write(record)
+
+        if self._use_wandb:
+            try:
+                import wandb
+                flat: dict = {
+                    **{f"timing/{k}": v for k, v in phase_ms.items()},
+                    **{f"memory/{k}": v for k, v in memory.items() if v is not None},
+                    **{f"throughput/{k}": v for k, v in throughput.items()},
+                    **metrics,
+                }
+                wandb.log(flat, step=step)
+            except ImportError:
+                pass
+
+    def step(self) -> None:
+        """Call once per training step (every step, not just log steps) for deep profiler."""
+        if self._deep_profiler is not None:
+            self._deep_profiler.step()
+
+    def finish(self) -> None:
+        if self._deep_profiler is not None:
+            self._deep_profiler.finish()
+        self._report_generator.generate()
+        if self._use_wandb:
+            try:
+                import wandb
+                wandb.finish()
+            except ImportError:
+                pass
