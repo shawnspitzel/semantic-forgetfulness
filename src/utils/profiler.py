@@ -187,3 +187,76 @@ class ReportGenerator:
                     except json.JSONDecodeError:
                         pass
         return records
+
+
+# ── DeepProfiler ──────────────────────────────────────────────────────────────
+
+class DeepProfiler:
+    """
+    Wraps torch.profiler for deep opt-in profiling.
+
+    Captures N active steps using schedule(wait=1, warmup=2, active=N),
+    then exports a Chrome trace and renders a memory flamegraph (CUDA only).
+    Only instantiated when profile_steps > 0.
+    """
+
+    def __init__(self, run_dir: Path, profile_steps: int) -> None:
+        from torch.profiler import ProfilerActivity, profile, schedule
+
+        self._run_dir = run_dir
+        self._profile_steps = profile_steps
+        self._total_steps_needed = 1 + 2 + profile_steps
+        self._steps_taken = 0
+        self._snapshot_taken = False
+        self._active = False
+
+        self._profiler = profile(
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+            schedule=schedule(wait=1, warmup=2, active=profile_steps),
+            profile_memory=True,
+            record_shapes=True,
+            with_stack=True,
+        )
+
+    def start(self) -> None:
+        self._profiler.__enter__()
+        self._active = True
+
+    def step(self) -> None:
+        if not self._active:
+            return
+        self._profiler.step()
+        self._steps_taken += 1
+        if self._steps_taken >= self._total_steps_needed and not self._snapshot_taken:
+            self._capture_memory_snapshot()
+
+    def finish(self) -> None:
+        if not self._active:
+            return
+        self._profiler.__exit__(None, None, None)
+        self._active = False
+        self._profiler.export_chrome_trace(str(self._run_dir / "trace.json"))
+        if not self._snapshot_taken:
+            self._capture_memory_snapshot()
+
+    def _capture_memory_snapshot(self) -> None:
+        self._snapshot_taken = True
+        if not torch.cuda.is_available():
+            return
+        try:
+            import pickle
+            snapshot = torch.cuda.memory._snapshot()
+            snap_path = self._run_dir / "memory_snapshot.pickle"
+            with snap_path.open("wb") as f:
+                pickle.dump(snapshot, f)
+            self._render_flamegraph(snapshot)
+        except Exception:
+            pass
+
+    def _render_flamegraph(self, snapshot: object) -> None:
+        try:
+            from torch.cuda._memory_viz import trace_plot
+            html = trace_plot(snapshot)
+            (self._run_dir / "memory_flamegraph.html").write_text(html, encoding="utf-8")
+        except Exception:
+            pass
