@@ -1,13 +1,22 @@
 Collecting en-core-web-sm==3.8.0
   Downloading https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl (12.8 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 63.4 MB/s  0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 35.2 MB/s  0:00:00
 [38;5;2m✔ Download and installation successful[0m
 You can now load the package via spacy.load('en_core_web_sm')
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: shawnspitzel (shawnspitzel-university-of-connecticut) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run 4fa8zm9d
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /home/sps22006/semantic-forgetfulness/wandb/run-20260324_223542-4fa8zm9d
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run fancy-armadillo-1
+wandb: ⭐️ View project at https://wandb.ai/shawnspitzel-university-of-connecticut/semantic-forgetfulness
+wandb: 🚀 View run at https://wandb.ai/shawnspitzel-university-of-connecticut/semantic-forgetfulness/runs/4fa8zm9d
 `torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   4%|▎         | 9/254 [00:00<00:03, 79.77it/s]Loading weights:   7%|▋         | 17/254 [00:00<00:03, 70.04it/s]Loading weights:  10%|▉         | 25/254 [00:00<00:03, 67.46it/s]Loading weights:  14%|█▍        | 36/254 [00:00<00:03, 64.50it/s]Loading weights:  17%|█▋        | 43/254 [00:00<00:03, 60.92it/s]Loading weights:  21%|██        | 53/254 [00:00<00:03, 60.30it/s]Loading weights:  24%|██▍       | 61/254 [00:00<00:03, 61.79it/s]Loading weights:  27%|██▋       | 68/254 [00:01<00:03, 61.27it/s]Loading weights:  43%|████▎     | 108/254 [00:01<00:01, 125.85it/s]Loading weights:  47%|████▋     | 120/254 [00:01<00:01, 105.87it/s]Loading weights:  52%|█████▏    | 131/254 [00:01<00:01, 93.35it/s] Loading weights:  56%|█████▌    | 142/254 [00:01<00:01, 91.95it/s]Loading weights:  60%|█████▉    | 152/254 [00:01<00:01, 90.20it/s]Loading weights:  63%|██████▎   | 161/254 [00:01<00:01, 88.68it/s]Loading weights:  69%|██████▊   | 174/254 [00:02<00:00, 91.94it/s]Loading weights:  72%|███████▏  | 184/254 [00:02<00:00, 71.32it/s]Loading weights:  77%|███████▋  | 195/254 [00:02<00:00, 79.40it/s]Loading weights:  80%|████████  | 204/254 [00:02<00:00, 81.82it/s]Loading weights:  84%|████████▍ | 213/254 [00:02<00:00, 81.72it/s]Loading weights:  87%|████████▋ | 222/254 [00:02<00:00, 68.90it/s]Loading weights: 100%|██████████| 254/254 [00:02<00:00, 91.02it/s]
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 61006.31it/s]
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 53034.31it/s]
-Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 2477.88it/s]
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 50257.25it/s]
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 27009.26it/s]
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 43126.47it/s]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 41575.72it/s]
 [1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
 Key                     | Status     |  | 
 ------------------------+------------+--+-
@@ -15,26 +24,3 @@ embeddings.position_ids | UNEXPECTED |  |
 
 [3mNotes:
 - UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
-Token indices sequence length is longer than the specified maximum sequence length for this model (2781999 > 131072). Running this sequence through the model will result in indexing errors
-Step 50/1000  L_distill=0.3802  L_recon=0.3008
-Step 100/1000  L_distill=0.3302  L_recon=0.3711
-Step 150/1000  L_distill=0.3104  L_recon=0.6562
-Step 200/1000  L_distill=0.3693  L_recon=0.2383
-Step 250/1000  L_distill=0.3181  L_recon=0.5859
-Step 300/1000  L_distill=0.2885  L_recon=0.3477
-Step 350/1000  L_distill=0.2898  L_recon=0.2734
-Step 400/1000  L_distill=0.3262  L_recon=0.2500
-Step 450/1000  L_distill=0.3177  L_recon=0.3867
-Step 500/1000  L_distill=0.3673  L_recon=0.2773
-Step 550/1000  L_distill=0.3121  L_recon=0.3633
-Step 600/1000  L_distill=0.3545  L_recon=0.4883
-Step 650/1000  L_distill=0.3119  L_recon=0.2344
-Step 700/1000  L_distill=0.2988  L_recon=0.2812
-Step 750/1000  L_distill=0.3521  L_recon=0.3086
-Step 800/1000  L_distill=0.2937  L_recon=0.1562
-Step 850/1000  L_distill=0.3684  L_recon=0.2930
-Step 900/1000  L_distill=0.2097  L_recon=0.4102
-Step 950/1000  L_distill=0.3224  L_recon=0.2383
-Step 1000/1000  L_distill=0.3093  L_recon=0.2422
-Adapters saved to checkpoints/
-Profiling artifacts: observability/run_20260324_214929/
