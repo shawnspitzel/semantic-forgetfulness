@@ -68,21 +68,24 @@ class ThroughputTracker:
     def __init__(self) -> None:
         self._tokens = 0
         self._segments = 0
-        self._t0 = time.perf_counter()
+        self._t0: float | None = None  # lazily set on first record()
 
     def record(self, n_tokens: int, n_segments: int) -> None:
+        if self._t0 is None:
+            self._t0 = time.perf_counter()
         self._tokens += n_tokens
         self._segments += n_segments
 
     def flush(self) -> dict[str, float]:
-        elapsed = max(time.perf_counter() - self._t0, 1e-9)
+        now = time.perf_counter()
+        elapsed = max((now - self._t0) if self._t0 is not None else 0.0, 1e-9)
         result = {
             "tokens_per_sec": self._tokens / elapsed,
             "segments_per_sec": self._segments / elapsed,
         }
         self._tokens = 0
         self._segments = 0
-        self._t0 = time.perf_counter()
+        self._t0 = None  # reset to lazy-init for next window
         return result
 
 
