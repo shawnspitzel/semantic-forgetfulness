@@ -98,3 +98,92 @@ class DiskWriter:
     def write(self, record: dict) -> None:
         with self._path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record) + "\n")
+
+
+# ── ReportGenerator ───────────────────────────────────────────────────────────
+
+class ReportGenerator:
+    """Reads metrics.jsonl and generates a self-contained Plotly HTML report."""
+
+    def __init__(self, run_dir: Path) -> None:
+        self._run_dir = run_dir
+
+    def generate(self) -> None:
+        records = self._load_records()
+        if not records:
+            return
+        try:
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+        except Exception:
+            return
+
+        steps = [r["step"] for r in records]
+        fig = make_subplots(
+            rows=4, cols=1,
+            subplot_titles=[
+                "Memory (MB)", "Per-Phase Timing (ms, stacked)",
+                "Throughput", "Loss & Grad Norms",
+            ],
+            vertical_spacing=0.08,
+        )
+
+        # Panel 1 — memory
+        for key, label in [
+            ("gpu_allocated_mb", "GPU Allocated"),
+            ("gpu_reserved_mb", "GPU Reserved"),
+            ("gpu_peak_mb", "GPU Peak"),
+            ("cpu_rss_mb", "CPU RSS"),
+        ]:
+            vals = [r["memory"].get(key) for r in records]
+            if any(v is not None for v in vals):
+                fig.add_trace(go.Scatter(x=steps, y=vals, name=label, mode="lines"), row=1, col=1)
+
+        # Panel 2 — per-phase stacked bar
+        phases = list(records[0].get("phase_ms", {}).keys())
+        for phase in phases:
+            fig.add_trace(
+                go.Bar(x=steps, y=[r["phase_ms"].get(phase, 0.0) for r in records], name=phase),
+                row=2, col=1,
+            )
+
+        # Panel 3 — throughput
+        fig.add_trace(
+            go.Scatter(x=steps, y=[r["throughput"]["tokens_per_sec"] for r in records],
+                       name="tokens/sec", mode="lines"),
+            row=3, col=1,
+        )
+        fig.add_trace(
+            go.Scatter(x=steps, y=[r["throughput"]["segments_per_sec"] for r in records],
+                       name="segments/sec", mode="lines"),
+            row=3, col=1,
+        )
+
+        # Panel 4 — losses + grad norms
+        all_keys: set[str] = set()
+        for r in records:
+            all_keys.update(r.get("metrics", {}).keys())
+        for key in sorted(all_keys):
+            fig.add_trace(
+                go.Scatter(x=steps, y=[r.get("metrics", {}).get(key) for r in records],
+                           name=key, mode="lines"),
+                row=4, col=1,
+            )
+
+        fig.update_layout(barmode="stack", title="Training Profiling Report", height=1600)
+        fig.write_html(str(self._run_dir / "report.html"))
+
+    def _load_records(self) -> list[dict]:
+        path = self._run_dir / "metrics.jsonl"
+        if not path.exists():
+            return []
+        records = []
+        with path.open(encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        records.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+        return records
