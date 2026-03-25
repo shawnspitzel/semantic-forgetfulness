@@ -84,3 +84,17 @@ class ThroughputTracker:
         self._segments = 0
         self._t0 = time.perf_counter()
         return result
+
+
+# ── DiskWriter ───────────────────────────────────────────────────────────────
+
+class DiskWriter:
+    """Appends newline-delimited JSON records to a file."""
+
+    def __init__(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self._path = path
+
+    def write(self, record: dict) -> None:
+        with self._path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record) + "\n")
