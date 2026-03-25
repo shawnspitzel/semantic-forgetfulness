@@ -1,0 +1,18 @@
+Collecting en-core-web-sm==3.8.0
+  Downloading https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl (12.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 54.9 MB/s  0:00:00
+[38;5;2m✔ Download and installation successful[0m
+You can now load the package via spacy.load('en_core_web_sm')
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   2%|▏         | 5/254 [00:00<00:09, 26.18it/s]Loading weights:   3%|▎         | 8/254 [00:00<00:09, 26.15it/s]Loading weights:   4%|▍         | 11/254 [00:00<00:09, 26.58it/s]Loading weights:   6%|▌         | 15/254 [00:00<00:08, 28.62it/s]Loading weights:   9%|▊         | 22/254 [00:00<00:07, 32.77it/s]Loading weights:  11%|█▏        | 29/254 [00:00<00:05, 39.57it/s]Loading weights:  13%|█▎        | 33/254 [00:00<00:06, 36.05it/s]Loading weights:  15%|█▍        | 37/254 [00:01<00:06, 35.46it/s]Loading weights:  16%|█▌        | 41/254 [00:01<00:05, 36.02it/s]Loading weights:  19%|█▉        | 48/254 [00:01<00:04, 44.38it/s]Loading weights:  21%|██        | 53/254 [00:01<00:04, 43.45it/s]Loading weights:  23%|██▎       | 58/254 [00:01<00:04, 44.97it/s]Loading weights:  25%|██▍       | 63/254 [00:01<00:05, 33.58it/s]Loading weights:  26%|██▋       | 67/254 [00:02<00:06, 27.33it/s]Loading weights:  28%|██▊       | 71/254 [00:02<00:06, 29.03it/s]Loading weights:  30%|██▉       | 75/254 [00:02<00:06, 27.68it/s]Loading weights:  32%|███▏      | 81/254 [00:02<00:05, 34.19it/s]Loading weights:  33%|███▎      | 85/254 [00:02<00:05, 33.58it/s]Loading weights:  35%|███▌      | 89/254 [00:02<00:06, 26.85it/s]Loading weights:  37%|███▋      | 93/254 [00:02<00:05, 27.53it/s]Loading weights:  40%|████      | 102/254 [00:02<00:03, 39.98it/s]Loading weights: 100%|██████████| 254/254 [00:02<00:00, 84.71it/s]
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 35505.86it/s]
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 10153.38it/s]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 3045.89it/s]
+[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+/var/spool/slurm/job23338609/slurm_script: line 20: 477662 Killed                  PYTHONPATH=src python -m training.pretrain --data-path data/train.txt --steps 1000 --device cuda
+slurmstepd: error: Detected 1 oom_kill event in StepId=23338609.batch. Some of the step tasks have been OOM Killed.
