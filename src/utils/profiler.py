@@ -149,12 +149,12 @@ class ReportGenerator:
 
         # Panel 3 — throughput
         fig.add_trace(
-            go.Scatter(x=steps, y=[r["throughput"]["tokens_per_sec"] for r in records],
+            go.Scatter(x=steps, y=[r.get("throughput", {}).get("tokens_per_sec") for r in records],
                        name="tokens/sec", mode="lines"),
             row=3, col=1,
         )
         fig.add_trace(
-            go.Scatter(x=steps, y=[r["throughput"]["segments_per_sec"] for r in records],
+            go.Scatter(x=steps, y=[r.get("throughput", {}).get("segments_per_sec") for r in records],
                        name="segments/sec", mode="lines"),
             row=3, col=1,
         )
@@ -250,8 +250,8 @@ class DeepProfiler:
             with snap_path.open("wb") as f:
                 pickle.dump(snapshot, f)
             self._render_flamegraph(snapshot)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[profiler] memory snapshot skipped: {e}")
 
     def _render_flamegraph(self, snapshot: object) -> None:
         try:
