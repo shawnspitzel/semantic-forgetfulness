@@ -6,7 +6,8 @@ for the frozen LLM backbone.
 
 Usage:
   python -m sf.training.pretrain --data-path data/train.txt --steps 500 --device cuda
-  python -m sf.training.pretrain --data-path data/train.txt --steps 500 --device cuda --wandb
+  python -m sf.training.pretrain --data-path data/train.txt --steps 500 --device cuda
+  python -m sf.training.pretrain --data-path data/train.txt --steps 500 --device cuda --no-wandb
 """
 from __future__ import annotations
 import argparse
@@ -228,9 +229,9 @@ if __name__ == "__main__":
     parser.add_argument("--data-path", type=Path, default=Path("data/train.txt"))
     parser.add_argument("--steps", type=int, default=500)
     parser.add_argument("--device", type=str, default="cpu")
-    parser.add_argument("--wandb", action="store_true", help="Enable Weights & Biases logging")
+    parser.add_argument("--no-wandb", action="store_true", help="Disable Weights & Biases logging")
     parser.add_argument("--profile", type=int, default=0,
                         metavar="N", help="Profile N steps with torch.profiler (0 = disabled)")
     args = parser.parse_args()
     train(Config.load(), args.data_path, args.steps, args.device,
-          use_wandb=args.wandb, profile_steps=args.profile)
+          use_wandb=not args.no_wandb, profile_steps=args.profile)
