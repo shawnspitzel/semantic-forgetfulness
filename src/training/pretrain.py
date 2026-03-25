@@ -68,7 +68,7 @@ def _stream_segments(data_path: Path, tokenizer, cfg: Config):
 
 
 def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu",
-          use_wandb: bool = False, profile_steps: int = 0) -> None:
+          use_wandb: bool = True, profile_steps: int = 0) -> None:
     dev = torch.device(device)
 
     if profile_steps > 0 and steps < profile_steps + 3:
