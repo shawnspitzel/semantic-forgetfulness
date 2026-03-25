@@ -203,7 +203,10 @@ def train(cfg: Config, data_path: Path, steps: int, device: str = "cpu",
                     "reconstruction/grounding_used": float(result.grounding_used),
                     **layer_losses,
                 }
-                profiler.log_step(step, metrics, n_tokens=len(seg_ids), n_segments=1)
+            else:
+                metrics = {}
+
+            profiler.log_step(step, metrics, n_tokens=len(seg_ids), n_segments=1)
 
             if step % 50 == 0:
                 print(f"Step {step}/{steps}  L_distill={l_distill.item():.4f}  L_recon={l_recon.item():.4f}")

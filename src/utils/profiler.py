@@ -258,8 +258,8 @@ class DeepProfiler:
             from torch.cuda._memory_viz import trace_plot
             html = trace_plot(snapshot)
             (self._run_dir / "memory_flamegraph.html").write_text(html, encoding="utf-8")
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[profiler] memory flamegraph skipped: {e}")
 
 
 # ── TrainingProfiler ──────────────────────────────────────────────────────────
