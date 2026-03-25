@@ -34,7 +34,7 @@ def _grad_norm(model) -> float:
     return total ** 0.5
 
 
-_CHUNK_CHARS = 10 * 1024 * 1024  # 10 MB per tokenization call
+_CHUNK_CHARS = 256 * 1024  # 256 KB — stays under model_max_length at ~72K tokens
 
 
 def _stream_segments(data_path: Path, tokenizer, cfg: Config):
