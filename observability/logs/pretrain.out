@@ -1,26 +1,207 @@
 Collecting en-core-web-sm==3.8.0
   Downloading https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl (12.8 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 35.2 MB/s  0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 42.5 MB/s  0:00:00
 [38;5;2m✔ Download and installation successful[0m
 You can now load the package via spacy.load('en_core_web_sm')
-wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
-wandb: Currently logged in as: shawnspitzel (shawnspitzel-university-of-connecticut) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
-wandb: setting up run 4fa8zm9d
-wandb: Tracking run with wandb version 0.25.1
-wandb: Run data is saved locally in /home/sps22006/semantic-forgetfulness/wandb/run-20260324_223542-4fa8zm9d
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run fancy-armadillo-1
-wandb: ⭐️ View project at https://wandb.ai/shawnspitzel-university-of-connecticut/semantic-forgetfulness
-wandb: 🚀 View run at https://wandb.ai/shawnspitzel-university-of-connecticut/semantic-forgetfulness/runs/4fa8zm9d
-`torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 50257.25it/s]
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 27009.26it/s]
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 43126.47it/s]
-Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 41575.72it/s]
-[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
-Key                     | Status     |  | 
-------------------------+------------+--+-
-embeddings.position_ids | UNEXPECTED |  | 
-
-[3mNotes:
-- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+Step 50/10000  L_distill=0.3884  L_recon=0.2969
+Step 100/10000  L_distill=0.3277  L_recon=0.3711
+Step 150/10000  L_distill=0.3096  L_recon=0.6484
+Step 200/10000  L_distill=0.3679  L_recon=0.2383
+Step 250/10000  L_distill=0.3207  L_recon=0.5859
+Step 300/10000  L_distill=0.2934  L_recon=0.3477
+Step 350/10000  L_distill=0.2905  L_recon=0.2695
+Step 400/10000  L_distill=0.3252  L_recon=0.2500
+Step 450/10000  L_distill=0.3131  L_recon=0.3867
+Step 500/10000  L_distill=0.3719  L_recon=0.2852
+Step 550/10000  L_distill=0.3097  L_recon=0.3672
+Step 600/10000  L_distill=0.3511  L_recon=0.4844
+Step 650/10000  L_distill=0.3105  L_recon=0.2344
+Step 700/10000  L_distill=0.2718  L_recon=0.2812
+Step 750/10000  L_distill=0.3535  L_recon=0.3125
+Step 800/10000  L_distill=0.2961  L_recon=0.1523
+Step 850/10000  L_distill=0.3680  L_recon=0.2695
+Step 900/10000  L_distill=0.2058  L_recon=0.4141
+Step 950/10000  L_distill=0.3244  L_recon=0.2344
+Step 1000/10000  L_distill=0.2941  L_recon=0.2617
+Step 1050/10000  L_distill=0.2974  L_recon=0.2695
+Step 1100/10000  L_distill=0.2944  L_recon=0.2383
+Step 1150/10000  L_distill=0.3799  L_recon=0.2461
+Step 1200/10000  L_distill=0.3181  L_recon=0.1992
+Step 1250/10000  L_distill=0.3775  L_recon=0.2383
+Step 1300/10000  L_distill=0.2694  L_recon=0.1328
+Step 1350/10000  L_distill=0.3520  L_recon=0.1445
+Step 1400/10000  L_distill=0.3015  L_recon=0.2852
+Step 1450/10000  L_distill=0.3191  L_recon=0.4258
+Step 1500/10000  L_distill=0.3029  L_recon=0.3945
+Step 1550/10000  L_distill=0.2937  L_recon=0.1406
+Step 1600/10000  L_distill=0.2543  L_recon=0.1602
+Step 1650/10000  L_distill=0.2616  L_recon=0.4648
+Step 1700/10000  L_distill=0.3083  L_recon=0.3008
+Step 1750/10000  L_distill=0.2722  L_recon=0.3242
+Step 1800/10000  L_distill=0.4008  L_recon=0.2617
+Step 1850/10000  L_distill=0.2456  L_recon=0.3164
+Step 1900/10000  L_distill=0.2921  L_recon=0.5156
+Step 1950/10000  L_distill=0.2748  L_recon=0.2266
+Step 2000/10000  L_distill=0.3573  L_recon=0.2109
+Step 2050/10000  L_distill=0.3149  L_recon=0.3008
+Step 2100/10000  L_distill=0.2669  L_recon=0.2148
+Step 2150/10000  L_distill=0.3376  L_recon=0.2578
+Step 2200/10000  L_distill=0.3585  L_recon=0.2305
+Step 2250/10000  L_distill=0.3442  L_recon=0.2188
+Step 2300/10000  L_distill=0.2433  L_recon=0.1641
+Step 2350/10000  L_distill=0.3622  L_recon=0.2070
+Step 2400/10000  L_distill=0.2183  L_recon=0.3594
+Step 2450/10000  L_distill=0.3308  L_recon=0.2070
+Step 2500/10000  L_distill=0.2592  L_recon=0.3398
+Step 2550/10000  L_distill=0.2457  L_recon=0.1562
+Step 2600/10000  L_distill=0.3161  L_recon=0.2773
+Step 2650/10000  L_distill=0.2960  L_recon=0.3477
+Step 2700/10000  L_distill=0.2527  L_recon=0.4180
+Step 2750/10000  L_distill=0.2398  L_recon=0.2148
+Step 2800/10000  L_distill=0.1762  L_recon=0.1602
+Step 2850/10000  L_distill=0.2699  L_recon=0.3008
+Step 2900/10000  L_distill=0.2163  L_recon=0.1719
+Step 2950/10000  L_distill=0.2245  L_recon=0.2617
+Step 3000/10000  L_distill=0.2784  L_recon=0.1875
+Step 3050/10000  L_distill=0.2431  L_recon=0.1602
+Step 3100/10000  L_distill=0.3225  L_recon=0.2266
+Step 3150/10000  L_distill=0.2275  L_recon=0.2500
+Step 3200/10000  L_distill=0.2474  L_recon=0.1523
+Step 3250/10000  L_distill=0.2910  L_recon=0.2109
+Step 3300/10000  L_distill=0.2693  L_recon=0.3047
+Step 3350/10000  L_distill=0.2595  L_recon=0.2539
+Step 3400/10000  L_distill=0.1812  L_recon=0.1523
+Step 3450/10000  L_distill=0.2137  L_recon=0.1641
+Step 3500/10000  L_distill=0.1732  L_recon=0.2070
+Step 3550/10000  L_distill=0.1992  L_recon=0.2188
+Step 3600/10000  L_distill=0.1667  L_recon=0.2109
+Step 3650/10000  L_distill=0.1812  L_recon=0.1289
+Step 3700/10000  L_distill=0.1423  L_recon=0.3984
+Step 3750/10000  L_distill=0.2781  L_recon=0.1445
+Step 3800/10000  L_distill=0.2373  L_recon=0.4531
+Step 3850/10000  L_distill=0.2273  L_recon=0.2188
+Step 3900/10000  L_distill=0.2476  L_recon=0.1484
+Step 3950/10000  L_distill=0.1623  L_recon=0.2812
+Step 4000/10000  L_distill=0.1271  L_recon=0.2383
+Step 4050/10000  L_distill=0.2942  L_recon=0.1914
+Step 4100/10000  L_distill=0.1616  L_recon=0.3164
+Step 4150/10000  L_distill=0.2268  L_recon=0.1719
+Step 4200/10000  L_distill=0.2060  L_recon=0.1719
+Step 4250/10000  L_distill=0.2404  L_recon=0.2031
+Step 4300/10000  L_distill=0.2810  L_recon=0.1602
+Step 4350/10000  L_distill=0.2830  L_recon=0.1875
+Step 4400/10000  L_distill=0.1258  L_recon=0.2539
+Step 4450/10000  L_distill=0.1745  L_recon=0.3555
+Step 4500/10000  L_distill=0.1789  L_recon=0.3438
+Step 4550/10000  L_distill=0.2181  L_recon=0.1562
+Step 4600/10000  L_distill=0.2509  L_recon=0.2266
+Step 4650/10000  L_distill=0.1751  L_recon=0.1641
+Step 4700/10000  L_distill=0.2213  L_recon=0.1289
+Step 4750/10000  L_distill=0.2199  L_recon=0.2891
+Step 4800/10000  L_distill=0.1218  L_recon=0.2422
+Step 4850/10000  L_distill=0.1475  L_recon=0.1914
+Step 4900/10000  L_distill=0.2262  L_recon=0.1484
+Step 4950/10000  L_distill=0.2062  L_recon=0.2305
+Step 5000/10000  L_distill=0.1930  L_recon=0.1445
+Step 5050/10000  L_distill=0.1209  L_recon=0.2930
+Step 5100/10000  L_distill=0.1789  L_recon=0.1992
+Step 5150/10000  L_distill=0.1595  L_recon=0.1914
+Step 5200/10000  L_distill=0.1913  L_recon=0.1953
+Step 5250/10000  L_distill=0.2028  L_recon=0.2695
+Step 5300/10000  L_distill=0.2290  L_recon=0.1484
+Step 5350/10000  L_distill=0.2511  L_recon=0.1836
+Step 5400/10000  L_distill=0.1629  L_recon=0.1875
+Step 5450/10000  L_distill=0.1328  L_recon=0.1562
+Step 5500/10000  L_distill=0.2179  L_recon=0.3320
+Step 5550/10000  L_distill=0.2255  L_recon=0.1641
+Step 5600/10000  L_distill=0.2314  L_recon=0.2070
+Step 5650/10000  L_distill=0.2171  L_recon=0.1602
+Step 5700/10000  L_distill=0.1429  L_recon=0.2227
+Step 5750/10000  L_distill=0.1789  L_recon=0.1992
+Step 5800/10000  L_distill=0.1832  L_recon=0.1719
+Step 5850/10000  L_distill=0.1474  L_recon=0.3086
+Step 5900/10000  L_distill=0.1290  L_recon=0.1484
+Step 5950/10000  L_distill=0.1781  L_recon=0.1484
+Step 6000/10000  L_distill=0.0530  L_recon=0.1680
+Step 6050/10000  L_distill=0.1019  L_recon=0.2891
+Step 6100/10000  L_distill=0.1964  L_recon=0.3594
+Step 6150/10000  L_distill=0.1444  L_recon=0.1719
+Step 6200/10000  L_distill=0.2047  L_recon=0.2969
+Step 6250/10000  L_distill=0.1446  L_recon=0.2227
+Step 6300/10000  L_distill=0.1406  L_recon=0.1680
+Step 6350/10000  L_distill=0.1653  L_recon=0.2266
+Step 6400/10000  L_distill=0.1221  L_recon=0.1406
+Step 6450/10000  L_distill=0.1733  L_recon=0.2305
+Step 6500/10000  L_distill=0.1411  L_recon=0.1602
+Step 6550/10000  L_distill=0.1655  L_recon=0.1758
+Step 6600/10000  L_distill=0.0987  L_recon=0.1719
+Step 6650/10000  L_distill=0.1115  L_recon=0.1289
+Step 6700/10000  L_distill=0.1167  L_recon=0.2812
+Step 6750/10000  L_distill=0.1115  L_recon=0.2812
+Step 6800/10000  L_distill=0.2000  L_recon=0.1641
+Step 6850/10000  L_distill=0.1532  L_recon=0.2188
+Step 6900/10000  L_distill=0.1301  L_recon=0.1523
+Step 6950/10000  L_distill=0.1468  L_recon=0.1914
+Step 7000/10000  L_distill=0.1185  L_recon=0.1367
+Step 7050/10000  L_distill=0.1526  L_recon=0.1875
+Step 7100/10000  L_distill=0.1446  L_recon=0.1641
+Step 7150/10000  L_distill=0.0847  L_recon=0.1445
+Step 7200/10000  L_distill=0.1172  L_recon=0.1289
+Step 7250/10000  L_distill=0.1220  L_recon=0.1758
+Step 7300/10000  L_distill=0.1276  L_recon=0.2188
+Step 7350/10000  L_distill=0.1243  L_recon=0.1836
+Step 7400/10000  L_distill=0.1432  L_recon=0.1680
+Step 7450/10000  L_distill=0.1336  L_recon=0.1797
+Step 7500/10000  L_distill=0.1538  L_recon=0.1836
+Step 7550/10000  L_distill=0.1780  L_recon=0.1797
+Step 7600/10000  L_distill=0.1745  L_recon=0.2070
+Step 7650/10000  L_distill=0.1455  L_recon=0.2031
+Step 7700/10000  L_distill=0.1173  L_recon=0.2227
+Step 7750/10000  L_distill=0.1128  L_recon=0.2148
+Step 7800/10000  L_distill=0.1629  L_recon=0.1406
+Step 7850/10000  L_distill=0.1708  L_recon=0.1484
+Step 7900/10000  L_distill=0.1895  L_recon=0.3633
+Step 7950/10000  L_distill=0.1626  L_recon=0.2617
+Step 8000/10000  L_distill=0.1951  L_recon=0.1602
+Step 8050/10000  L_distill=0.1959  L_recon=0.2500
+Step 8100/10000  L_distill=0.1017  L_recon=0.1445
+Step 8150/10000  L_distill=0.1402  L_recon=0.1758
+Step 8200/10000  L_distill=0.1139  L_recon=0.2109
+Step 8250/10000  L_distill=0.1463  L_recon=0.3125
+Step 8300/10000  L_distill=0.1567  L_recon=0.2500
+Step 8350/10000  L_distill=0.1474  L_recon=0.1367
+Step 8400/10000  L_distill=0.1096  L_recon=0.2188
+Step 8450/10000  L_distill=0.0434  L_recon=0.1406
+Step 8500/10000  L_distill=0.1036  L_recon=0.1406
+Step 8550/10000  L_distill=0.1769  L_recon=0.1914
+Step 8600/10000  L_distill=0.0745  L_recon=0.1250
+Step 8650/10000  L_distill=0.1538  L_recon=0.1680
+Step 8700/10000  L_distill=0.1161  L_recon=0.1328
+Step 8750/10000  L_distill=0.2054  L_recon=0.2227
+Step 8800/10000  L_distill=0.1299  L_recon=0.1562
+Step 8850/10000  L_distill=0.1816  L_recon=0.2812
+Step 8900/10000  L_distill=0.0925  L_recon=0.1836
+Step 8950/10000  L_distill=0.1430  L_recon=0.1602
+Step 9000/10000  L_distill=0.1078  L_recon=0.1289
+Step 9050/10000  L_distill=0.0780  L_recon=0.1484
+Step 9100/10000  L_distill=0.2085  L_recon=0.4180
+Step 9150/10000  L_distill=0.1411  L_recon=0.3398
+Step 9200/10000  L_distill=0.1731  L_recon=0.1602
+Step 9250/10000  L_distill=0.1465  L_recon=0.2695
+Step 9300/10000  L_distill=0.1608  L_recon=0.1055
+Step 9350/10000  L_distill=0.1880  L_recon=0.1953
+Step 9400/10000  L_distill=0.2065  L_recon=0.2695
+Step 9450/10000  L_distill=0.1671  L_recon=0.1445
+Step 9500/10000  L_distill=0.0762  L_recon=0.1836
+Step 9550/10000  L_distill=0.0862  L_recon=0.2031
+Step 9600/10000  L_distill=0.0462  L_recon=0.1992
+Step 9650/10000  L_distill=0.1854  L_recon=0.3242
+Step 9700/10000  L_distill=0.1517  L_recon=0.1992
+Step 9750/10000  L_distill=0.1421  L_recon=0.4062
+Step 9800/10000  L_distill=0.1776  L_recon=0.1445
+Step 9850/10000  L_distill=0.0729  L_recon=0.2539
+Step 9900/10000  L_distill=0.1259  L_recon=0.2461
+Step 9950/10000  L_distill=0.1134  L_recon=0.3203
+Step 10000/10000  L_distill=0.1213  L_recon=0.1992
+Adapters saved to checkpoints/
+Profiling artifacts: observability/run_20260514_004611/
