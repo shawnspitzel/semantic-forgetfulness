@@ -19,6 +19,8 @@ dependencies = [
     "pyyaml>=6.0",
     "datasets>=2.18",
     "wandb>=0.17",
+    "matplotlib>=3.8",
+    "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]
