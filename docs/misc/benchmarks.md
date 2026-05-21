@@ -7,9 +7,7 @@ purely as a language model paper.
 
 ### The headline claim
 
-> **Importance-aware hierarchical compression achieves task performance within 5%
-> of full-context inference at 4× memory reduction, and improves further across
-> deployment sessions via self-supervised learning from cache-miss signals.**
+> **Importance-aware hierarchical compression achieves higher scores on Needle-in-Haystack evaluations, and can successfully capture semantic importance through long-context discussions. The goal here is to provide a framework MINIMIZING context-rot.**
 
 This claim has two parts. The first is a performance-efficiency tradeoff claim
 (standard in compression papers). The second is the novel contribution — no prior
